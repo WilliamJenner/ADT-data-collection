@@ -36,9 +36,11 @@ namespace OnsetPredictions
             LatestData = new DrumTypeData();
             PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>()
             {
-                new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast), 
+                new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
                 new IntervalPredictionEngine("MedFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
                 new IntervalPredictionEngine("LowFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                //new IntervalPredictionEngine("AllBandDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+
             };
 
             Reset();

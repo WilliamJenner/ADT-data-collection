@@ -15,7 +15,8 @@ namespace OnsetPredictions
         public bool Broadcasting = false;
         
         private System.Timers.Timer Timer;
-        private ConcurrentBag<DrumSoundType> _drumSounds; 
+        private ConcurrentBag<DrumSoundType> _drumSounds;
+        private MidiOutputDevice dev = MidiDevice.Outputs[3];
 
         /// <summary>
         /// 
@@ -27,6 +28,7 @@ namespace OnsetPredictions
             Broadcasting = broadcasting;
             _drumSounds = new ConcurrentBag<DrumSoundType>();
             SetTimer(interval);
+            dev.Open();
         }
 
         public void Broadcast(DrumSoundType drumType)
@@ -56,35 +58,35 @@ namespace OnsetPredictions
         private void PlayEvents()
         {
             // Open the midi port
-            using var dev = MidiDevice.Outputs[3];
-            dev.Open();
-
-            // Transform queued sounds into their midi values
-            var midiValues = _drumSounds.Distinct().Select(n => n.ToMidiDrum()).ToList();
-
-            // Play each value
-            foreach (var midiValue in midiValues)
+            if (dev.IsOpen)
             {
-                Console.WriteLine(midiValue);
+                // Transform queued sounds into their midi values
+                var midiValues = _drumSounds.Distinct().Select(n => n.ToMidiDrum()).ToList();
 
-                // Transform the value to the correct note
-                var note = MidiUtility.NoteIdToNote((byte)midiValue, true);
-                dev.Send(new MidiMessageNoteOn(note, 127, 10));
-              
+                // Play each value
+                foreach (var midiValue in midiValues)
+                {
+                    Console.WriteLine(midiValue);
+
+                    // Transform the value to the correct note
+                    var note = MidiUtility.NoteIdToNote((byte)midiValue, true);
+                    dev.Send(new MidiMessageNoteOn(note, 127, 10));
+
+                }
+
+                Thread.Sleep(10);
+
+                foreach (var midiValue in midiValues)
+                {
+
+                    // Transform the value to the correct note
+                    var note = MidiUtility.NoteIdToNote((byte)midiValue, true);
+                    dev.Send(new MidiMessageNoteOff(note, 127, 10));
+                }
+
+                // Clear the sound queue
+                _drumSounds.Clear();
             }
-
-            Thread.Sleep(10);
-
-            foreach (var midiValue in midiValues)
-            {
-
-                // Transform the value to the correct note
-                var note = MidiUtility.NoteIdToNote((byte)midiValue, true);
-                dev.Send(new MidiMessageNoteOff(note, 127, 10));
-            }
-
-            // Clear the sound queue
-            _drumSounds.Clear();
         }
     }
 }

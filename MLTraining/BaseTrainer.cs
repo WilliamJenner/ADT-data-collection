@@ -5,6 +5,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Microsoft.ML.Trainers;
+using Microsoft.ML.Trainers.FastTree;
+using Microsoft.ML.Trainers.LightGbm;
 using MLTraining.DataStructures;
 
 namespace MLTraining
@@ -12,8 +15,8 @@ namespace MLTraining
     public abstract class BaseTrainer
     {
         private readonly string _modelName;
-        private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\ConsoleApp1\\sound\\experiment";
-        //private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\MLTraining\\data";
+        //private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\ConsoleApp1\\sound\\experiment";
+        private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\MLTraining\\data";
         private readonly string TrainDataRelativePath;
         private readonly string TestDataRelativePath;
 
@@ -33,8 +36,8 @@ namespace MLTraining
             _modelName = modelName;
             MlContext = new MLContext(0);
             ModelRelativePath = $"{BaseModelsRelativePath}\\{modelName}.zip";
-            TestDataRelativePath = $"{BaseDatasetsRelativePath}\\drumtype-test.tsv";
-            TrainDataRelativePath = $"{BaseDatasetsRelativePath}\\drumtype-train.tsv";
+            TestDataRelativePath = $"{BaseDatasetsRelativePath}\\test.tsv";
+            TrainDataRelativePath = $"{BaseDatasetsRelativePath}\\train.tsv";
             ModelPath = GetAbsolutePath(ModelRelativePath);
             TestDataPath = GetAbsolutePath(TestDataRelativePath);
             TrainDataPath = GetAbsolutePath(TrainDataRelativePath);
@@ -53,19 +56,39 @@ namespace MLTraining
             var testDataView = mlContext.Data.LoadFromTextFile<DrumTypeData>(TestDataPath, hasHeader: true);
 
             // STEP 2: Common data process configuration with pipeline data transformations
-            var dataProcessPipeline = mlContext.Transforms.Conversion
-                .MapValueToKey("Label", nameof(DrumTypeData.Type))
-                .Append(mlContext.Transforms.Concatenate("Features", inputColumnNames))
-                    .AppendCacheCheckpoint(mlContext);
+            var dataProcessPipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "KeyColumn", inputColumnName: nameof(DrumTypeData.Type))
+                .Append(mlContext.Transforms.Concatenate("Features", inputColumnNames)
+                    .AppendCacheCheckpoint(mlContext));
             // Use in-memory cache for small/medium datasets to lower training time. 
             // Do NOT use it (remove .AppendCacheCheckpoint()) when handling very large datasets. 
 
-            // STEP 3: Set the training algorithm, then append the trainer to the pipeline  
-            var trainer = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy()
-                .Append(mlContext.Transforms.Conversion.MapKeyToValue(nameof(DrumTypeData.Type), "Label"));
 
+            //IEstimator<ITransformer> dataPrepEstimator =
+            //    mlContext.Transforms.Concatenate("Features", inputColumnNames)
+            //        .Append(mlContext.Transforms.NormalizeMinMax("Features"));
+
+            //// Create data prep transformer
+            //ITransformer dataPrepTransformer = dataPrepEstimator.Fit(trainingDataView);
+            //IDataView transformedData = dataPrepTransformer.Transform(trainingDataView);
+
+            //IEstimator<ITransformer> sdcaEstimator = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(
+            //    labelColumnName: "KeyColumn",
+            //    featureColumnName: "Features" /*, historySize: 1000, optimizationTolerance: 1e-20f, 
+            //        enforceNonNegativity:true,  l2Regularization: 0.5f*/)
+            //    .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
+            //var cvResults = mlContext.Regression.CrossValidate(transformedData, sdcaEstimator, numberOfFolds: 5);
+
+            
+            // STEP 3: Set the training algorithm, then append the trainer to the pipeline  
+            var trainer = mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features")
+                    
+                    //, historySize: 1000, optimizationTolerance: 1e-20f, 
+                    //enforceNonNegativity:true,  l2Regularization: 0.5f) 
+
+                .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
 
             var trainingPipeline = dataProcessPipeline.Append(trainer);
+
             // STEP 4: Train the model fitting to the DataSet
             Console.WriteLine("=============== Training the model ===============");
             ITransformer trainedModel = trainingPipeline.Fit(trainingDataView);
@@ -74,8 +97,7 @@ namespace MLTraining
             Console.WriteLine("===== Evaluating Model's accuracy with Test data =====");
             var predictions = trainedModel.Transform(testDataView);
 
-
-            var metrics = mlContext.MulticlassClassification.Evaluate(predictions, "Label");
+            var metrics = mlContext.MulticlassClassification.Evaluate(predictions, "KeyColumn");
 
             PrintMultiClassClassificationMetrics(trainer.ToString() + _modelName, metrics);
 
@@ -140,12 +162,14 @@ namespace MLTraining
                 $"    AccuracyMicro = {metrics.MicroAccuracy:0.####}, a value between 0 and 1, the closer to 1, the better");
             Console.WriteLine($"    LogLoss = {metrics.LogLoss:0.####}, the closer to 0, the better");
             Console.WriteLine($"    LogLossReduction = {metrics.LogLossReduction:0.####}, the closer to 0, the better");
-            Console.WriteLine(
-                $"    LogLoss for class 1 = {metrics.PerClassLogLoss[0]:0.####}, the closer to 0, the better");
-            Console.WriteLine(
-                $"    LogLoss for class 2 = {metrics.PerClassLogLoss[1]:0.####}, the closer to 0, the better");
-            Console.WriteLine(
-                $"    LogLoss for class 3 = {metrics.PerClassLogLoss[2]:0.####}, the closer to 0, the better");
+
+            for (var index = 0; index < metrics.PerClassLogLoss.Count; index++)
+            {
+                var logLoss = metrics.PerClassLogLoss[index];
+                Console.WriteLine(
+                    $"    LogLoss for class {index} = {logLoss:0.####}, the closer to 0, the better");
+            }
+
             Console.WriteLine("************************************************************");
         }
     }

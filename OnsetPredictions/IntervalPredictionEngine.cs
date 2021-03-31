@@ -80,7 +80,7 @@ namespace OnsetPredictions
                         }
                     }
 
-                    if (highScore * 100 > 85)
+                    if (highScore * 100 > 70)
                     {
                         OnPredict((DrumSoundType) highScoreIndex);
                     }

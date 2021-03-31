@@ -67,15 +67,18 @@ namespace OnsetDataGeneration
                 var dictionaryRows = ParseDictionaries(dictionaries);
                 AppendParsedDictToSb(sb, dictionaryRows, chosenDrum, criticalBandFrequencies);
 
-                Console.WriteLine("Continue? YES:1 NO:2");
-                var chosen = ReadInteger(new[] {1, 2});
+                //Console.WriteLine("Continue? YES:1 NO:2");
+                //var chosen = ReadInteger(new[] {1, 2});
+                Console.ReadKey();
 
-                canContinue = chosen switch
-                {
-                    1 => true,
-                    2 => false,
-                    _ => canContinue
-                };
+                //canContinue = chosen switch
+                //{
+                //    1 => true,
+                //    2 => false,
+                //    _ => canContinue
+                //};
+
+                canContinue = false;
             } while (canContinue);
 
             wasapiCapture.Stop();
