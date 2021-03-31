@@ -2,14 +2,10 @@
 {
     public enum DrumSoundType
     {
-        //Kick,
-        //HighTom,
-        //MediumTom,
-        //LowTom,
-        //Snare,
-        Crash,
-        China,
-        ClosedHiHat,
-        OpenHiHat,
+        Kick,
+        Snare,
+        Cymbal,
+        LowTom,
+        HighTom,
     }
 }

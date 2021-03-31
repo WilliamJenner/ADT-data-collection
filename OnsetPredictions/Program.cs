@@ -36,7 +36,7 @@ namespace OnsetPredictions
                 // BEGIN CAPTURE
                 wasapiCapture.Start();
                 // Start detecting on each writer
-                onsetWriterBuilder.DetectAndPredict();
+                onsetWriterBuilder.DetectAndBroadcast();
 
                 // WAIT FOR INPUT TO STOP
                 Console.WriteLine("Press any key to stop...");

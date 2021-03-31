@@ -14,7 +14,7 @@ namespace OnsetPredictions
     public interface IOnsetWriterBuilder
     {
         void Build(IEnumerable<double> frequencies);
-        void DetectAndPredict();
+        void DetectAndBroadcast();
         ConcurrentDictionary<double, OnsetDetector> GetOnsetWriters();
         void Reset();
     }
@@ -25,18 +25,20 @@ namespace OnsetPredictions
         // Using ConcurrentDictionary as it can handle multiple threads concurrently / large collections
         private ConcurrentDictionary<double, OnsetDetector> OnsetWriters = new ConcurrentDictionary<double, OnsetDetector>();
         private ConcurrentBag<IntervalPredictionEngine> PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>();
+        private MidiBroadcaster MidiBroadcaster;
         private DrumTypeData LatestData;
         private ISoundIn soundIn;
 
         public DrumPredictor(ISoundIn soundIn)
         {
             this.soundIn = soundIn;
+            MidiBroadcaster = new MidiBroadcaster(true);
             LatestData = new DrumTypeData();
             PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>()
             {
-                new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData),
-                new IntervalPredictionEngine("MedFreqDrumTypeClassificationModel", () => LatestData),
-                new IntervalPredictionEngine("LowFreqDrumTypeClassificationModel", () => LatestData),
+                new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast), 
+                new IntervalPredictionEngine("MedFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine("LowFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
             };
 
             Reset();
@@ -55,7 +57,7 @@ namespace OnsetPredictions
             });
         }
 
-        public void DetectAndPredict()
+        public void DetectAndBroadcast()
         {
             Parallel.ForEach(GetOnsetWriters(), (writer) =>
             {

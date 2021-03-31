@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Extensions\Extensions.csproj" />
+    <ProjectReference Include="..\Midi\Midi.csproj" />
     <ProjectReference Include="..\MLTraining\MLTraining.csproj" />
   </ItemGroup>
 
