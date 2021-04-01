@@ -16,7 +16,10 @@ namespace OnsetDataGeneration
         protected OnsetWriterBuilder OnsetWriterBuilder;
         private int ChosenDrum;
         protected List<CriticalBandModel> CriticalBands;
-        protected List<double> CriticalBandFrequencies => CriticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
+        //protected List<double> CriticalBandFrequencies => CriticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
+
+        // Create a list of every 50 between 1 and 4001 - not sure if inclusive or exclusive so
+        protected List<double> CriticalBandFrequencies => Enumerable.Range(1, 4001).Where(integer => integer % 50 == 0).Select(Convert.ToDouble).ToList();
 
         private const string DataDirectory = "C:\\source\\ADT\\MLTraining\\data";
 
@@ -24,6 +27,7 @@ namespace OnsetDataGeneration
         {
             ChosenDrum = chosenDrum;
             CriticalBands = BarkScale.BarkScale.CriticalBands();
+
         }
 
         public abstract void Generate();
@@ -51,10 +55,9 @@ namespace OnsetDataGeneration
             var str = $"results {ChosenDrum}.txt";
             var path = Path.Combine(DataDirectory, str);
 
-            File.WriteAllText(path, sb.ToString());
+            File.AppendAllText(path, sb.ToString());
 
             var resultLines = File.ReadAllLines(path).ToList();
-            resultLines.ForEach(l => Debug.WriteLine(l.Split("\t")));
         }
 
         private static List<IEnumerable<Tuple<double, float>>> ParseDictionaries(ConcurrentDictionary<double, ConcurrentDictionary<string, float>> dictionaries)

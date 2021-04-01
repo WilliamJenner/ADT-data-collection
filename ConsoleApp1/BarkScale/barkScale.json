@@ -1,13 +1,13 @@
 [
   {
     "Number": 1,
-    "Center frequency (Hz)": 50,
+    "Center frequency (Hz)": 10,
     "Cut-off frequency (Hz)": 100,
     "Bandwidth (Hz)": 80
   },
   {
     "Number": 2,
-    "Center frequency (Hz)": 150,
+    "Center frequency (Hz)": 20,
     "Cut-off frequency (Hz)": 200,
     "Bandwidth (Hz)": 100
   },

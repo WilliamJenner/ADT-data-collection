@@ -33,6 +33,9 @@ namespace OnsetDataGeneration
             Console.ReadKey();
 
             StopAndSave();
+
+            wasapiCapture.Stop();
+            wasapiCapture.Dispose();
         }
     }
 }

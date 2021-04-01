@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using CSCore;
 using CSCore.DSP;
 using OnsetDataGeneration.BarkScale;
@@ -30,19 +31,28 @@ namespace OnsetDataGeneration
 
         public override int Read(float[] buffer, int offset, int count)
         {
-            int read = base.Read(buffer, offset, count);
-            lock (_lockObject)
+            try
             {
-                if (Filter != null)
+                int read = base.Read(buffer, offset, count);
+                lock (_lockObject)
                 {
-                    for (int i = 0; i < read; i++)
+                    if (Filter != null)
                     {
-                        buffer[i + offset] = Filter.Process(buffer[i + offset]);
+                        for (int i = 0; i < read; i++)
+                        {
+                            buffer[i + offset] = Filter.Process(buffer[i + offset]);
+                        }
                     }
                 }
+
+                return read;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
 
-            return read;
+            return 0;
         }
     }
 }

@@ -24,6 +24,8 @@ namespace OnsetDataGeneration
                 : new Mp3DataGenerator(chosenDrum) as BaseDataGenerator;
 
             generator.Generate();
+            Console.WriteLine("...");
+            Console.ReadKey();
         }
 
         private static List<IEnumerable<Tuple<double, float>>> ParseDictionaries(ConcurrentDictionary<double, ConcurrentDictionary<string, float>> dictionaries)

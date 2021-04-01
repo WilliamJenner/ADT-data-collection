@@ -44,8 +44,8 @@ namespace OnsetDataGeneration
             Parallel.ForEach(frequencies, frequency =>
             {
                 var writer = soundIn == null
-                    ? new OnsetWriter(waveSource, frequency)
-                    : new OnsetWriter(soundIn, frequency);
+                    ? new OnsetWriter(waveSource, frequency, boosted: true)
+                    : new OnsetWriter(soundIn, frequency, boosted: false);
                 OnsetWriters.AddOrUpdate(frequency, writer, (d, oldWriter) => writer);
             });
         }

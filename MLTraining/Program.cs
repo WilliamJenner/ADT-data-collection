@@ -19,7 +19,7 @@ namespace MLTraining
             MediumFrequencyTrainer mft = new MediumFrequencyTrainer();
             HighFrequencyTrainer hft = new HighFrequencyTrainer();
 
-            //AllBandTrainer abt = new AllBandTrainer();
+            AllBandTrainer abt = new AllBandTrainer();
 
             //FloorLowFrequencyTrainer flft = new FloorLowFrequencyTrainer();
             //CeilingLowFrequencyTrainer clft = new CeilingLowFrequencyTrainer();
