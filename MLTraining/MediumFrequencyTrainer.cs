@@ -1,6 +1,10 @@
-﻿using MLTraining.DataStructures;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.ML;
+using MLTraining.DataStructures;
 
-namespace MLTraining.Trainers
+namespace MLTraining
 {
     public class MediumFrequencyTrainer : BaseTrainer
     {

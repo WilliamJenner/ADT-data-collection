@@ -72,6 +72,12 @@
     "Bandwidth (Hz)": 240
   },
   {
+    "Number": 12,
+    "Center frequency (Hz)": 1600,
+    "Cut-off frequency (Hz)": 1720,
+    "Bandwidth (Hz)": 240
+  },
+  {
     "Number": 13,
     "Center frequency (Hz)": 1850,
     "Cut-off frequency (Hz)": 2000,

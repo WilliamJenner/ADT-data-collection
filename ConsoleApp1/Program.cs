@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ConsoleTables;
+using CSCore.Codecs;
 using CSCore.SoundIn;
 
 namespace OnsetDataGeneration
@@ -15,81 +16,14 @@ namespace OnsetDataGeneration
     {
         private static void Main(string[] args)
         {
+            var inputType = GetInputType();
+            var chosenDrum = GetDrumTypeInput();
 
-            var criticalBands = BarkScale.BarkScale.CriticalBands();
-            var criticalBandFrequencies = criticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
+            var generator = (DSPInputType) inputType == DSPInputType.Microphone
+                ? new MicrophoneDataGenerator(chosenDrum) as BaseDataGenerator
+                : new Mp3DataGenerator(chosenDrum) as BaseDataGenerator;
 
-            var sb = new StringBuilder();
-            SetupStringBuilder(sb, criticalBandFrequencies);
-
-            // SETUP DSP
-            //create a new soundIn instance
-            var wasapiCapture = new WasapiCapture();
-            wasapiCapture.Initialize();
-            var onsetWriterBuilder = new OnsetWriterBuilder(wasapiCapture);
-            var canContinue = true;
-            var chosenDrums = new List<int>();
-
-            do
-            {
-                // Get the input for the type of drum being used for this loop
-                var chosenDrum = GetDrumTypeInput();
-                chosenDrums.Add(chosenDrum);
-                // Make sure it's clear before we start
-                onsetWriterBuilder.Reset();
-                onsetWriterBuilder.Detect(criticalBandFrequencies);
-
-                // Start detecting on each writer
-                Parallel.ForEach(onsetWriterBuilder.GetOnsetWriters(), (writer) =>
-                {
-                    writer.Value.Detecting = true;
-                });
-
-                // BEGIN CAPTURE
-                wasapiCapture.Start();
-
-                // WAIT FOR INPUT TO STOP
-                Console.WriteLine("Press any key to stop...");
-                Console.ReadKey();
-
-                // PARSE CAPTURED DATA FROM WRITERS INTO STRING BUILDER
-                var dictionaries = new ConcurrentDictionary<double, ConcurrentDictionary<string, float>>();
-
-                Parallel.ForEach(onsetWriterBuilder.GetOnsetWriters(), (writer) =>
-                {
-                    writer.Value.Detecting = false;
-                    dictionaries.AddOrUpdate(writer.Value.Frequency, writer.Value.ProcessedOnsetPeaks, (d, peaks) => peaks);
-                });
-
-                // Create rows from the dictionaries
-                // Each index in the list contains a IEnumerable of tuples of <FREQUENCY, RAW FLOAT DATA>
-                // Each index in the list is a 10ms window
-                var dictionaryRows = ParseDictionaries(dictionaries);
-                AppendParsedDictToSb(sb, dictionaryRows, chosenDrum, criticalBandFrequencies);
-
-                //Console.WriteLine("Continue? YES:1 NO:2");
-                //var chosen = ReadInteger(new[] {1, 2});
-                Console.ReadKey();
-
-                //canContinue = chosen switch
-                //{
-                //    1 => true,
-                //    2 => false,
-                //    _ => canContinue
-                //};
-
-                canContinue = false;
-            } while (canContinue);
-
-            wasapiCapture.Stop();
-            wasapiCapture.Dispose();
-            var str = $"results {string.Join("_", chosenDrums)}.txt";
-            var path = Path.Combine("C:\\source\\ADT\\MLTraining\\data", str);
-
-            File.WriteAllText(path, sb.ToString());
-
-            var resultLines = File.ReadAllLines(path).ToList();
-            resultLines.ForEach(l => Debug.WriteLine(l.Split("\t")));
+            generator.Generate();
         }
 
         private static List<IEnumerable<Tuple<double, float>>> ParseDictionaries(ConcurrentDictionary<double, ConcurrentDictionary<string, float>> dictionaries)
@@ -172,7 +106,7 @@ namespace OnsetDataGeneration
         private static int GetDrumTypeInput()
         {
             // Create a table with all of the options of DrumSoundType, and ask read integer for chosen DrumSoundType
-            var table = SetupTable(new[] { "Drum", "Id" }, typeof(DrumSoundType));
+            var table = SetupTable<DrumSoundType>(new[] { "Drum", "Id" });
             table.Options.EnableCount = false;
             table.Write();
 
@@ -183,21 +117,33 @@ namespace OnsetDataGeneration
            return ReadInteger(drumTypeInts.ToArray());
         }
 
+        private static int GetInputType()
+        {
+            // Create a table with all of the options of DrumSoundType, and ask read integer for chosen DrumSoundType
+            var table = SetupTable<DSPInputType>(new[] { "Input", "Id" });
+            table.Options.EnableCount = false;
+            table.Write();
+
+            Console.WriteLine("> Select which input you are using");
+
+            var inputTypes = Extensions.EnumExtensions.GetEnumValues(typeof(DSPInputType));
+            // Pass in the drum type enum to ensure it's a valid choice
+            return ReadInteger(inputTypes.ToArray());
+        }
+
         /// <summary>
         /// Creates the table from given enum and columns
         /// </summary>
         /// <param name="columns"></param>
         /// <param name="enumType"></param>
         /// <returns></returns>
-        private static ConsoleTable SetupTable(string[] columns, Type enumType)
+        private static ConsoleTable SetupTable<T>(string[] columns) where T : Enum
         {
             var table = new ConsoleTable(columns);
-            
-            var drumTypeInts = Extensions.EnumExtensions.GetEnumValues(enumType);
-
-            foreach (var drumTypeInt in drumTypeInts)
+           
+            foreach (var enumValue in Enum.GetValues(typeof(T)))
             {
-                table.AddRow($"{(DrumSoundType) drumTypeInt}", drumTypeInt);
+                table.AddRow($"{enumValue}", (int)enumValue);
             }
 
             return table;

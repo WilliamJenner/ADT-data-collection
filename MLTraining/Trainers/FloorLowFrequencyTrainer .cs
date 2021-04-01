@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.ML;
-using MLTraining.DataStructures;
+﻿using MLTraining.DataStructures;
 
-namespace MLTraining
+namespace MLTraining.Trainers
 {
     public class FloorLowFrequencyTrainer : BaseTrainer
     {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CSCore;
 using CSCore.SoundIn;
 
 namespace OnsetDataGeneration
@@ -18,10 +19,18 @@ namespace OnsetDataGeneration
         // Using ConcurrentDictionary as it can handle multiple threads concurrently / large collections
         private ConcurrentDictionary<double, OnsetWriter> OnsetWriters = new ConcurrentDictionary<double, OnsetWriter>();
         private ISoundIn soundIn;
+        private IWaveSource waveSource;
 
         public OnsetWriterBuilder(ISoundIn soundIn)
         {
             this.soundIn = soundIn;
+
+            Reset();
+        }
+
+        public OnsetWriterBuilder(IWaveSource waveSource)
+        {
+            this.waveSource = waveSource;
 
             Reset();
         }
@@ -34,7 +43,9 @@ namespace OnsetDataGeneration
         {
             Parallel.ForEach(frequencies, frequency =>
             {
-                var writer = new OnsetWriter(this.soundIn, frequency);
+                var writer = soundIn == null
+                    ? new OnsetWriter(waveSource, frequency)
+                    : new OnsetWriter(soundIn, frequency);
                 OnsetWriters.AddOrUpdate(frequency, writer, (d, oldWriter) => writer);
             });
         }
