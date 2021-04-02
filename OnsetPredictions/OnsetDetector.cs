@@ -66,7 +66,7 @@ namespace OnsetPredictions
 
                 if (activated)
                 {
-                    Console.WriteLine($"ONSET AT {Frequency}");
+                    //Console.WriteLine($"ONSET AT {Frequency}");
                 }
 
                 // Assign a new value to PreviousPeak

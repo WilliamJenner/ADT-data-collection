@@ -69,13 +69,13 @@ namespace OnsetDataGeneration
                     //})
                     .AppendSource(x =>
                     {
-                        var biQuad = new PitchShifter(x) { PitchShiftFactor = 0.9f };
+                        var biQuad = new PitchShifter(x) { PitchShiftFactor = 1f };
                         return biQuad;
                     })
                     .AppendSource(x =>
                     {
                         // double the volume to catch more peaks
-                        var biQuad = new GainSource(x) { Volume = boosted ? 10f : 0.6f };
+                        var biQuad = new GainSource(x) { Volume = boosted ? 30f : 0.6f };
                         return biQuad;
                     })
                     .AppendSource(x =>

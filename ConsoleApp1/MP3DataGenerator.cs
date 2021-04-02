@@ -13,14 +13,32 @@ namespace OnsetDataGeneration
 {
     class Mp3DataGenerator : BaseDataGenerator
     {
+        private readonly int _chosenDrum;
+
         public Mp3DataGenerator(int chosenDrum) : base(chosenDrum)
         {
+            _chosenDrum = chosenDrum;
         }
 
         public override void Generate()
         {
             // Get all mp3 files from the dir
-            var directory = "D:\\Google Drive\\Final Year\\Project\\kick samples";
+            string directory;
+
+            switch ((DrumSoundType)_chosenDrum)
+            {
+                case DrumSoundType.Snare:
+                    directory = "D:\\Google Drive\\Final Year\\Project\\snare samples";
+                    break;
+                case DrumSoundType.Cymbal:
+                    directory = "D:\\Google Drive\\Final Year\\Project\\cymbal samples";
+                    break;
+                case DrumSoundType.Kick:
+                    directory = "D:\\Google Drive\\Final Year\\Project\\kick samples";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("soundType", $"Drum sound type was {_chosenDrum}");
+            }
 
             var files =
                 Directory.GetFiles(directory).Where(f => f.Contains(".mp3") || f.Contains(".wav")).ToList();
