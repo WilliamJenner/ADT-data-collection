@@ -23,42 +23,38 @@ namespace OnsetDataGeneration
         public override void Generate()
         {
             // Get all mp3 files from the dir
-            string directory;
-
-            switch ((DrumSoundType)_chosenDrum)
+            string[] directories = new[]
             {
-                case DrumSoundType.Snare:
-                    directory = "D:\\Google Drive\\Final Year\\Project\\snare samples";
-                    break;
-                case DrumSoundType.Cymbal:
-                    directory = "D:\\Google Drive\\Final Year\\Project\\cymbal samples";
-                    break;
-                case DrumSoundType.Kick:
-                    directory = "D:\\Google Drive\\Final Year\\Project\\kick samples";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("soundType", $"Drum sound type was {_chosenDrum}");
-            }
+                "D:\\Google Drive\\Final Year\\Project\\kick samples",
+                "D:\\Google Drive\\Final Year\\Project\\snare samples",
+                "D:\\Google Drive\\Final Year\\Project\\cymbal samples"
+            };
 
-            var files =
-                Directory.GetFiles(directory).Where(f => f.Contains(".mp3") || f.Contains(".wav")).ToList();
 
-            var chunkedFiles = files.SplitList(nSize: 15);
-
-            foreach (var chunk in chunkedFiles.Select((value, i) => (value, i)))
+            for (var index = 0; index < directories.Length; index++)
             {
-                foreach (var file in chunk.value)
+                var directory = directories[index];
+                var files =
+                    Directory.GetFiles(directory).Where(f => f.Contains(".mp3") || f.Contains(".wav")).ToList();
+
+                var chunkedFiles = files.SplitList(nSize: 15);
+
+                foreach (var chunk in chunkedFiles.Select((value, i) => (value, i)))
                 {
-                    var wavInput = CodecFactory.Instance.GetCodec(Path.Combine(directory, file));
-                    OnsetWriterBuilder = new OnsetWriterBuilder(wavInput);
-                    OnsetWriterBuilder.Reset();
-                    OnsetWriterBuilder.Detect(CriticalBandFrequencies);
-                    StopAndSave();
-                    // Add a little sleep so all the onset writers and threads can dispose
-                }
+                    foreach (var file in chunk.value)
+                    {
+                        var wavInput = CodecFactory.Instance.GetCodec(Path.Combine(directory, file));
+                        OnsetWriterBuilder = new OnsetWriterBuilder(wavInput);
+                        OnsetWriterBuilder.Reset();
+                        OnsetWriterBuilder.Detect(CriticalBandFrequencies);
+                        ChosenDrum = index; // order of dirs is equal to types of drums
+                        StopAndSave();
+                        // Add a little sleep so all the onset writers and threads can dispose
+                    }
 
-                Console.WriteLine($"Completed chunk {chunk.i}/{chunkedFiles.Count()}");
-                Thread.Sleep(1000);
+                    Console.WriteLine($"Completed chunk {chunk.i}/{chunkedFiles.Count()}");
+                    Thread.Sleep(1000);
+                }
             }
 
             // below is for reading via subdirs

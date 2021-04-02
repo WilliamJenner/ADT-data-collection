@@ -16,7 +16,7 @@ namespace OnsetPredictions
         private PredictionEngine<DrumTypeData, DrumTypePrediction> PredictionEngine;
         private System.Timers.Timer Timer;
         public bool Predicting = false;
-        private Action<DrumSoundType> OnPredict;
+        private Action<DrumSoundType, double> OnPredict;
 
         /// <summary>
         /// Predicts the type of drum on an interval (specified in milliseconds).
@@ -25,7 +25,7 @@ namespace OnsetPredictions
         /// <param name="getLatestData">Func with no parameters which returns the latest DrumTypeData</param>
         /// <param name="onPredict">Callback which returns predictions</param>
         /// <param name="interval">Interval for the timer (milliseconds). Default is 100 </param>
-        public IntervalPredictionEngine(string modelName, Func<DrumTypeData> getLatestData, Action<DrumSoundType> onPredict, double interval = 100)
+        public IntervalPredictionEngine(string modelName, Func<DrumTypeData> getLatestData, Action<DrumSoundType, double> onPredict, double interval = 100)
         {
             _modelName = modelName;
             GetLatestData = getLatestData;
@@ -80,9 +80,9 @@ namespace OnsetPredictions
                         }
                     }
 
-                    if (highScore * 100 > 80)
+                    if (highScore * 100 > 90)
                     {
-                        OnPredict((DrumSoundType) highScoreIndex);
+                        OnPredict((DrumSoundType) highScoreIndex, highScore * 100);
                     }
                 }
             }

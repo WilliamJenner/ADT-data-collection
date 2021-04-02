@@ -14,7 +14,7 @@ namespace OnsetDataGeneration
     public abstract class BaseDataGenerator
     {
         protected OnsetWriterBuilder OnsetWriterBuilder;
-        private int ChosenDrum;
+        protected int ChosenDrum;
         protected List<CriticalBandModel> CriticalBands;
         //protected List<double> CriticalBandFrequencies => CriticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
 
@@ -52,7 +52,7 @@ namespace OnsetDataGeneration
             AppendParsedDictToSb(sb, dictionaryRows, ChosenDrum, CriticalBandFrequencies);
 
             
-            var str = $"results {ChosenDrum}.txt";
+            var str = $"results {ChosenDrum}.csv";
             var path = Path.Combine(DataDirectory, str);
 
             File.AppendAllText(path, sb.ToString());
@@ -82,8 +82,9 @@ namespace OnsetDataGeneration
         {
             foreach (var frequenciesForMs in theDataWeWant)
             {
-                var appendum = chosenDrum + "\t";
+                var appendum = chosenDrum + ",";
                 var allZeroes = true;
+                var lastItem = criticalBandFrequencies.Last();
 
                 foreach (var criticalBandFrequency in criticalBandFrequencies)
                 {
@@ -93,7 +94,8 @@ namespace OnsetDataGeneration
 
                     if (valueToWrite > 0) allZeroes = false;
 
-                    appendum += valueToWrite + "\t";
+                    appendum += lastItem == criticalBandFrequency ? 
+                        valueToWrite.ToString() : valueToWrite + ",";
                 }
 
                 if (!allZeroes)

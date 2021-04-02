@@ -13,14 +13,19 @@ namespace MLTraining
 
             AllBandTrainer abt = new AllBandTrainer();
 
-            //FloorLowFrequencyTrainer flft = new FloorLowFrequencyTrainer();
-            //CeilingLowFrequencyTrainer clft = new CeilingLowFrequencyTrainer();
+            Console.WriteLine("===================================================================");
+            Console.WriteLine("===================================================================");
+            Console.WriteLine("===================================================================");
 
-            //FloorMediumFrequencyTrainer fmft = new FloorMediumFrequencyTrainer();
-            //CeilingMediumFrequencyTrainer cmft = new CeilingMediumFrequencyTrainer();
 
-            //FloorHighFrequencyTrainer fhft = new FloorHighFrequencyTrainer();
-            //CeilingHighFrequencyTrainer chft = new CeilingHighFrequencyTrainer();
+            //LowFrequencyFloorTrainer flft = new LowFrequencyFloorTrainer();
+            //LowFrequencyCeilingTrainer clft = new LowFrequencyCeilingTrainer();
+
+            //MediumFrequencyFloorTrainer fmft = new MediumFrequencyFloorTrainer();
+            //MediumFrequencyCeilingTrainer cmft = new MediumFrequencyCeilingTrainer();
+
+            //HighFrequencyFloorTrainer fhft = new HighFrequencyFloorTrainer();
+            //HighFrequencyCeilingTrainer chft = new HighFrequencyCeilingTrainer();
 
 
             Console.WriteLine("=============== End of process, hit any key to finish ===============");

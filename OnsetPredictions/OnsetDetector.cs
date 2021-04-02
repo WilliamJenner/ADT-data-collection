@@ -43,7 +43,14 @@ namespace OnsetPredictions
             SoundInSource.DataAvailable += GetDataAvailable();
 
 
-            pm = new PeakMeter(SoundInSource.ToSampleSource().AppendSource(x =>
+            pm = new PeakMeter(SoundInSource.ToSampleSource()
+                .AppendSource(x =>
+                {
+                    // double the volume to catch more peaks
+                    var biQuad = new GainSource(x) { Volume = 1f };
+                    return biQuad;
+                })
+                .AppendSource(x =>
             {
                 var biQuad = new BiQuadFilterSource(x);
                 biQuad.Filter = new BandpassFilter(SoundInSource.WaveFormat.SampleRate, frequency);

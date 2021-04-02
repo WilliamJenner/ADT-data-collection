@@ -18,12 +18,12 @@ namespace OnsetPredictions
         {
             switch (soundType)
             {
+                case DrumSoundType.Kick:
+                    return MidiDrum.BassDrum1;
                 case DrumSoundType.Snare:
                     return MidiDrum.SnareDrum1;
                 case DrumSoundType.Cymbal:
                     return MidiDrum.CrashCymbal1;
-                case DrumSoundType.Kick:
-                    return MidiDrum.BassDrum1;
                 case DrumSoundType.HighTom:
                     return MidiDrum.HighTom1;
                 case DrumSoundType.LowTom:

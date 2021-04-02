@@ -50,7 +50,7 @@ namespace OnsetDataGeneration
         {
             foreach (var frequenciesForMs in theDataWeWant)
             {
-                var appendum = chosenDrum + "\t";
+                var appendum = chosenDrum + ",";
                 var allZeroes = true;
                     
                 foreach (var criticalBandFrequency in criticalBandFrequencies)
@@ -61,7 +61,7 @@ namespace OnsetDataGeneration
 
                     if (valueToWrite > 0) allZeroes = false;
 
-                    appendum += valueToWrite + "\t";
+                    appendum += valueToWrite + ",";
                 }
 
                 if (!allZeroes)

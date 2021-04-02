@@ -39,7 +39,17 @@ namespace OnsetPredictions
                 new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
                 new IntervalPredictionEngine("MedFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
                 new IntervalPredictionEngine("LowFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                //new IntervalPredictionEngine("AllBandDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+
+                new IntervalPredictionEngine("AllBandDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+
+                //new IntervalPredictionEngine("LowFreqFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                //new IntervalPredictionEngine("LowFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+
+                //new IntervalPredictionEngine("MedFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                //new IntervalPredictionEngine("MedFreqFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+
+                //new IntervalPredictionEngine("HighFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                //new IntervalPredictionEngine("HighFrequencyFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
 
             };
 
