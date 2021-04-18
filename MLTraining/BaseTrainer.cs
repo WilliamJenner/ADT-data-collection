@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.ML;
@@ -46,10 +47,12 @@ namespace MLTraining
 
         public void Train(string[] columns)
         {
+            Console.WriteLine("================================");
             //1.
-            //BuildTrainEvaluateAndSaveModel(MlContext, columns);
-            FitAndCrossValidate(MlContext, columns, true);
+            BuildTrainEvaluateAndSaveModel(MlContext, columns);
+            //FitAndCrossValidate(MlContext, columns, true);
 
+            PredictExamples(MlContext);
         }
 
         private void BuildTrainEvaluateAndSaveModel(MLContext mlContext, string[] inputColumnNames)
@@ -105,13 +108,13 @@ namespace MLTraining
                     // Use the multi-class SDCA model to predict the label using features.
                     .Append(mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(labelColumnName: "Type"));
 
-            var trainTestSplit = mlContext.Data.TrainTestSplit(allData);
+            var trainTestSplit = mlContext.Data.TrainTestSplit(allData, testFraction: 0.2D);
 
             // Train the model.
             var model = dynamicPipeline.Fit(trainTestSplit.TrainSet);
             // Compute quality metrics on the test set.
             var cvMetrics = mlContext.MulticlassClassification.Evaluate(model.Transform(trainTestSplit.TestSet), labelColumnName: "Type");
-            Console.WriteLine($"{_modelName}:" + cvMetrics.MicroAccuracy);
+            Console.WriteLine($"{_modelName} accuracy |\t" + cvMetrics.MicroAccuracy);
 
             // Now run the 5-fold cross-validation experiment, using the same pipeline.
             var cvResults = mlContext.MulticlassClassification.CrossValidate(allData, dynamicPipeline, numberOfFolds: 5, labelColumnName: "Type");
@@ -119,13 +122,56 @@ namespace MLTraining
             // The results object is an array of 5 elements. For each of the 5 folds, we have metrics, model and scored test data.
             // Let's compute the average micro-accuracy.
             var microAccuracies = cvResults.Select(r => r.Metrics.MicroAccuracy);
-            Console.WriteLine($"{_modelName} CV:" + microAccuracies.Average());
+            Console.WriteLine($"{_modelName} Cross Validation Accuracy |\t" + microAccuracies.Average());
+
+            
 
             if (save)
             {
                 mlContext.Model.Save(model, trainingDataView.Schema, ModelPath);
                 Console.WriteLine("The model is saved to {0}", ModelPath);
             }
+        }
+
+        public void PredictExamples(MLContext mlContext)
+        {
+            DataViewSchema predictionPipelineSchema;
+            ITransformer predictionPipeline = mlContext.Model.Load(ModelPath, out predictionPipelineSchema);
+
+            var predEngine = mlContext.Model.CreatePredictionEngine<DrumTypeData, DrumTypePrediction>(predictionPipeline);
+
+            // During prediction we will get Score column with 3 float values.
+            // We need to find way to map each score to original label.
+            // In order to do what we need to get TrainingLabelValues from Score column.
+            // TrainingLabelValues on top of Score column represent original labels for i-th value in Score array.
+            // Let's look how we can convert key value for PredictedLabel to original labels.
+            // We need to read KeyValues for "PredictedLabel" column.
+            VBuffer<float> keys = default;
+            predEngine.OutputSchema["PredictedLabel"].GetKeyValues(ref keys);
+            
+            //Console.WriteLine("===== Predicting snare ====");
+            //var prediction = predEngine.Predict(SampleDrumTypeData.Snare);
+
+            //for (int i = 0; i < prediction.Score.Length; i++)
+            //{
+            //    Console.WriteLine($"{i} : {prediction.Score[i] * 100}");
+            //}
+
+            //Console.WriteLine("===== Predicting Cymbal ====");
+            //prediction = predEngine.Predict(SampleDrumTypeData.Cymbal);
+
+            //for (int i = 0; i < prediction.Score.Length; i++)
+            //{
+            //    Console.WriteLine($"{i} : {prediction.Score[i] * 100}");
+            //}
+
+            //Console.WriteLine("===== Predicting kick ====");
+            //prediction = predEngine.Predict(SampleDrumTypeData.Kick);
+
+            //for (int i = 0; i < prediction.Score.Length; i++)
+            //{
+            //    Console.WriteLine($"{i} : {prediction.Score[i] * 100}");
+            //}
         }
 
         public string GetAbsolutePath(string relativePath)

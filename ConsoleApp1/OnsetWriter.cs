@@ -11,6 +11,8 @@ using CSCore.DSP;
 using CSCore.SoundIn;
 using CSCore.Streams;
 using CSCore.Streams.Effects;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Statistics;
 
 namespace OnsetDataGeneration
 {
@@ -26,7 +28,8 @@ namespace OnsetDataGeneration
 
         private float PreviousPeak;
 
-        public ConcurrentDictionary<string, float> ProcessedOnsetPeaks;
+        public ConcurrentDictionary<string, OnsetPeakModel> ProcessedOnsetPeaks;
+        private FftProvider FftProvider;
         private int Read;
         private readonly ISoundIn SoundInSource;
         private WaveWriter WaveFileWriter;
@@ -37,7 +40,7 @@ namespace OnsetDataGeneration
         {
             Frequency = frequency;
             SoundInSource = soundIn;
-            Bootstrap(boosted);
+            Bootstrap(boosted); // override detecting
         }
 
         public OnsetWriter(IWaveSource waveSource, double frequency, bool boosted)
@@ -51,31 +54,23 @@ namespace OnsetDataGeneration
 
         private void Bootstrap(bool boosted, bool detecting = true)
         {
-            var source = SoundInSource == null ? WaveSource : new SoundInSource(SoundInSource);
+            var source = Source();
 
             Detecting = detecting;
-            ProcessedOnsetPeaks = new ConcurrentDictionary<string, float>();
+            ProcessedOnsetPeaks = new ConcurrentDictionary<string, OnsetPeakModel>();
             NotificationSource = new SingleBlockNotificationStream(source.ToSampleSource());
-            Buffer = new float[source.WaveFormat.BytesPerSecond / 2];
+            FftProvider = new FftProvider(source.WaveFormat.Channels, FftSize.Fft4096);
+            NotificationSource.SingleBlockRead += NotificationSource_SingleBlockRead;
 
-             pm = new PeakMeter(source
-                     .ChangeSampleRate(24000)
+            Buffer = new float[(int)(source.WaveFormat.BytesPerSecond / 2.0)];
+
+            pm = new PeakMeter(source
                      .ToSampleSource()
-                    //.AppendSource(x =>
-                    //{
-                    //    // double the volume to catch more peaks
-                    //    var biQuad = new GainSource(x); /*{ Volume = boosted ? 20f : 0.7f }*/;
-                    //    return biQuad;
-                    //})
-                    .AppendSource(x =>
-                    {
-                        var biQuad = new PitchShifter(x) { PitchShiftFactor = 1f };
-                        return biQuad;
-                    })
-                    .AppendSource(x =>
+                     //.AppendSource(x => NotificationSource)
+                     .AppendSource(x =>
                     {
                         // double the volume to catch more peaks
-                        var biQuad = new GainSource(x) { Volume = boosted ? 30f : 0.6f };
+                        var biQuad = new GainSource(x) { Volume = boosted ? 20f : 1f };
                         return biQuad;
                     })
                     .AppendSource(x =>
@@ -90,6 +85,7 @@ namespace OnsetDataGeneration
                 { Interval = 10};
             pm.PeakCalculated += Pm_PeakCalculated;
 
+
             // Define how to read data based on source type
             switch (source)
             {
@@ -101,9 +97,18 @@ namespace OnsetDataGeneration
                     {
                         Thread.Sleep(10);
                     }
-
                     break;
             }
+        }
+
+        private IWaveSource Source()
+        {
+            return SoundInSource == null ? WaveSource : new SoundInSource(SoundInSource);
+        }
+
+        private void NotificationSource_SingleBlockRead(object sender, SingleBlockReadEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void Pm_PeakCalculated(object sender, PeakEventArgs e)
@@ -113,15 +118,27 @@ namespace OnsetDataGeneration
                 if (Detecting)
                 {
                     var activated = e.PeakValue > 0.5 && e.PeakValue > PreviousPeak;
+                    var fftData = new float[(int)FftSize.Fft4096];
 
                     // If activated and this peak is greater than the previous
                     if (activated)
+                    {
                         Console.WriteLine($"{DateTime.Now:T} | ONSET DETECTION AT {Frequency} : {e.PeakValue}");
+
+                        // Write FFT if activated
+                        var source = Source();
+                        var numberOfSamples = (int) (source.WaveFormat.BytesPerSecond / 2.0) / source.WaveFormat.SampleRate;
+                        FftProvider.Add(Buffer, numberOfSamples);
+                        FftProvider.GetFftData(fftData);
+                    }
 
                     var newPeakValue = activated ? e.PeakValue : 0;
 
-                    ProcessedOnsetPeaks.AddOrUpdate(DateTime.Now.ToString("HH:mm:ss.f"), newPeakValue,
-                        (time, oldValue) => oldValue > newPeakValue ? oldValue : newPeakValue);
+                    var onsetPeak = new OnsetPeakModel(newPeakValue, fftData);
+                    
+                    // Assign the largest peak value for this microsecond to dictionary
+                    ProcessedOnsetPeaks.AddOrUpdate(DateTime.Now.ToString("HH:mm:ss.f"), onsetPeak,
+                        (time, oldValue) => oldValue.PeakValue > onsetPeak.PeakValue ? oldValue : onsetPeak);
 
                     // Assign a new value to PreviousPeak
                     PreviousPeak = e.PeakValue;

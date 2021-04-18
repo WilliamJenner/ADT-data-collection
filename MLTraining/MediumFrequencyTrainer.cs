@@ -12,32 +12,20 @@ namespace MLTraining
         {
             Train(new string[]
             {
-                nameof(DrumTypeData.Frequency1350  ),
-                nameof(DrumTypeData.Frequency1400  ),
-                nameof(DrumTypeData.Frequency1450  ),
-                nameof(DrumTypeData.Frequency1500  ),
-                nameof(DrumTypeData.Frequency1550  ),
-                nameof(DrumTypeData.Frequency1600  ),
-                nameof(DrumTypeData.Frequency1650  ),
-                nameof(DrumTypeData.Frequency1700  ),
-                nameof(DrumTypeData.Frequency1750  ),
-                nameof(DrumTypeData.Frequency1800  ),
-                nameof(DrumTypeData.Frequency1850  ),
-                nameof(DrumTypeData.Frequency1900  ),
-                nameof(DrumTypeData.Frequency1950  ),
                 nameof(DrumTypeData.Frequency2000  ),
-                nameof(DrumTypeData.Frequency2050  ),
-                nameof(DrumTypeData.Frequency2100  ),
                 nameof(DrumTypeData.Frequency2150  ),
-                nameof(DrumTypeData.Frequency2200  ),
-                nameof(DrumTypeData.Frequency2250  ),
-                nameof(DrumTypeData.Frequency2300  ),
-                nameof(DrumTypeData.Frequency2350  ),
-                nameof(DrumTypeData.Frequency2400  ),
-                nameof(DrumTypeData.Frequency2450  ),
                 nameof(DrumTypeData.Frequency2500  ),
-                nameof(DrumTypeData.Frequency2550  ),
-                nameof(DrumTypeData.Frequency2600  )
+                nameof(DrumTypeData.Frequency2900  ),
+                nameof(DrumTypeData.Frequency3000  ),
+                nameof(DrumTypeData.Frequency3400  ),
+                nameof(DrumTypeData.Frequency4000  ),
+                nameof(DrumTypeData.Frequency4800  ),
+                nameof(DrumTypeData.Frequency5000  ),
+                nameof(DrumTypeData.Frequency5800  ),
+                nameof(DrumTypeData.Frequency6000  ),
+                nameof(DrumTypeData.Frequency7000  ),
+                nameof(DrumTypeData.Frequency8000  ),
+                nameof(DrumTypeData.Frequency8500  ),
             });
         }
     }

@@ -18,8 +18,15 @@ namespace OnsetDataGeneration
         protected List<CriticalBandModel> CriticalBands;
         //protected List<double> CriticalBandFrequencies => CriticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
 
-        // Create a list of every 50 between 1 and 4001 - not sure if inclusive or exclusive so
-        protected List<double> CriticalBandFrequencies => Enumerable.Range(1, 4001).Where(integer => integer % 50 == 0).Select(Convert.ToDouble).ToList();
+        // Create a list of every 1000 between 1 and 20,001 - not sure if inclusive or exclusive so
+        protected List<double> CriticalBandFrequencies =>
+            CriticalBands.Select(x => (double)x.CenterFrequencyHz)
+                //.Union(Enumerable.Range(1, 20001)
+                //    .Where(integer => integer % 1000 == 0)
+                //    .Select(Convert.ToDouble))
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
 
         private const string DataDirectory = "C:\\source\\ADT\\MLTraining\\data";
 
@@ -28,6 +35,7 @@ namespace OnsetDataGeneration
             ChosenDrum = chosenDrum;
             CriticalBands = BarkScale.BarkScale.CriticalBands();
 
+            CriticalBandFrequencies.ForEach(cbf => Debug.Write($"{cbf},{cbf}Mean,{cbf}Avg,"));
         }
 
         public abstract void Generate();
@@ -35,7 +43,7 @@ namespace OnsetDataGeneration
         public void StopAndSave()
         {
             // PARSE CAPTURED DATA FROM WRITERS INTO STRING BUILDER
-            var dictionaries = new ConcurrentDictionary<double, ConcurrentDictionary<string, float>>();
+            var dictionaries = new ConcurrentDictionary<double, ConcurrentDictionary<string, OnsetPeakModel>>();
 
             Parallel.ForEach(OnsetWriterBuilder.GetOnsetWriters(), (writer) =>
             {
@@ -60,7 +68,7 @@ namespace OnsetDataGeneration
             var resultLines = File.ReadAllLines(path).ToList();
         }
 
-        private static List<IEnumerable<Tuple<double, float>>> ParseDictionaries(ConcurrentDictionary<double, ConcurrentDictionary<string, float>> dictionaries)
+        private static List<IEnumerable<Tuple<double, OnsetPeakModel>>> ParseDictionaries(ConcurrentDictionary<double, ConcurrentDictionary<string, OnsetPeakModel>> dictionaries)
         {
             var rows = dictionaries.SelectMany(frequencyDict => frequencyDict.Value.Select(timeOnsetDict =>
                 Tuple.Create(frequencyDict.Key, timeOnsetDict.Key, timeOnsetDict.Value))).ToList();
@@ -78,11 +86,11 @@ namespace OnsetDataGeneration
         /// <param name="theDataWeWant"></param>
         /// <param name="chosenDrum"></param>
         /// <param name="criticalBandFrequencies"></param>
-        private static void AppendParsedDictToSb(StringBuilder sb, List<IEnumerable<Tuple<double, float>>> theDataWeWant, int chosenDrum, IEnumerable<double> criticalBandFrequencies)
+        private static void AppendParsedDictToSb(StringBuilder sb, List<IEnumerable<Tuple<double, OnsetPeakModel>>> theDataWeWant, int chosenDrum, IEnumerable<double> criticalBandFrequencies)
         {
             foreach (var frequenciesForMs in theDataWeWant)
             {
-                var appendum = chosenDrum + ",";
+                var frequencyModelString = chosenDrum + ",";
                 var allZeroes = true;
                 var lastItem = criticalBandFrequencies.Last();
 
@@ -90,16 +98,17 @@ namespace OnsetDataGeneration
                 {
                     var theFrequency = frequenciesForMs.FirstOrDefault(f => f.Item1 == criticalBandFrequency);
 
-                    var valueToWrite = theFrequency == null ? 0 : theFrequency.Item2;
+                    var onsetModel = theFrequency?.Item2 ?? new OnsetPeakModel(0, new float[0]);
 
-                    if (valueToWrite > 0) allZeroes = false;
+                    if (onsetModel.PeakValue > 0) allZeroes = false;
 
-                    appendum += lastItem == criticalBandFrequency ? 
-                        valueToWrite.ToString() : valueToWrite + ",";
+                    var isLastItem = lastItem == criticalBandFrequency;
+
+                    frequencyModelString += onsetModel.ToString(leadingComma: !isLastItem);
                 }
 
                 if (!allZeroes)
-                    sb.AppendLine(appendum);
+                    sb.AppendLine(frequencyModelString);
             }
         }
     }

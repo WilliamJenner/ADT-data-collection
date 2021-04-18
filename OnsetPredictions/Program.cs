@@ -19,7 +19,16 @@ namespace OnsetPredictions
 
             var criticalBands = BarkScale.BarkScale.CriticalBands();
             //var criticalBandFrequencies = criticalBands.Select(x => (double)x.CenterFrequencyHz).ToList();
-            var criticalBandFrequencies = Enumerable.Range(1, 4001).Where(integer => integer % 50 == 0).Select(Convert.ToDouble).ToList();
+            //var criticalBandFrequencies = Enumerable.Range(1, 20000).Where(integer => integer % 1000 == 0).Select(Convert.ToDouble).ToList();
+            var criticalBandFrequencies =
+            criticalBands.Select(x => (double)x.CenterFrequencyHz).Union(Enumerable.Range(1, 20001)
+                    .Where(integer => integer % 1000 == 0)
+                    .Select(Convert.ToDouble))
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            criticalBandFrequencies.ForEach(c => Debug.Write($"{c},"));
 
             // SETUP DSP
             //create a new soundIn instance

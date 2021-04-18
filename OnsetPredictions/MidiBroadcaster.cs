@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using CSCore.XAudio2.X3DAudio;
 using M;
 
 namespace OnsetPredictions
@@ -60,13 +62,17 @@ namespace OnsetPredictions
             // Open the midi port
             if (dev.IsOpen)
             {
-                // Transform queued sounds into their midi values
-                var midiValues = _drumSounds.Distinct().Select(n => new {MidiDrum = n.Item1.ToMidiDrum(), HighScore = n.Item2 }).ToList();
+          
 
+                // Transform queued sounds into their midi values
+                var midiValues = _drumSounds.Distinct(new MidiDrumScoreEqualityComparer())
+                    .Select(n => new {MidiDrum = n.Item1.ToMidiDrum(), HighScore = n.Item2 })
+                    .ToList();
+                
                 // Play each value
                 foreach (var midiValue in midiValues)
                 {
-                    Console.WriteLine($"{midiValue.HighScore }| {midiValue.MidiDrum}");
+                    Console.WriteLine($"{midiValue.HighScore:##.000}% | \t{midiValue.MidiDrum}");
 
                     // Transform the value to the correct note
                     var note = MidiUtility.NoteIdToNote((byte)midiValue.MidiDrum, true);

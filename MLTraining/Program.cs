@@ -14,8 +14,9 @@ namespace MLTraining
             AllBandTrainer abt = new AllBandTrainer();
 
             Console.WriteLine("===================================================================");
+            Console.WriteLine("=============== End of process, hit any key to finish =============");
             Console.WriteLine("===================================================================");
-            Console.WriteLine("===================================================================");
+            Console.ReadKey();
 
 
             //LowFrequencyFloorTrainer flft = new LowFrequencyFloorTrainer();
@@ -28,8 +29,6 @@ namespace MLTraining
             //HighFrequencyCeilingTrainer chft = new HighFrequencyCeilingTrainer();
 
 
-            Console.WriteLine("=============== End of process, hit any key to finish ===============");
-            Console.ReadKey();
         }
     }
 }

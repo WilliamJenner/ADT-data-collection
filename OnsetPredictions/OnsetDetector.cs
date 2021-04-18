@@ -39,9 +39,7 @@ namespace OnsetPredictions
             SoundInSource = new SoundInSource(soundIn);
             NotificationSource = new SingleBlockNotificationStream(SoundInSource.ToSampleSource());
             Buffer = new float[SoundInSource.WaveFormat.BytesPerSecond / 2];
-
             SoundInSource.DataAvailable += GetDataAvailable();
-
 
             pm = new PeakMeter(SoundInSource.ToSampleSource()
                 .AppendSource(x =>
