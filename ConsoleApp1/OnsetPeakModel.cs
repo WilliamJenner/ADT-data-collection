@@ -40,15 +40,33 @@ namespace OnsetDataGeneration
 
         public string ToString(bool leadingComma = true, string seperator = ",")
         {
-            var fftMean = FftVector.Mean();
-            var fftAvg = FftVector.Average();
+            try
+            {
+                if (PeakValue == 0) return GetEmptyString(leadingComma);
 
-            var dataPoints = new string[] { PeakValue.ToString(), fftMean.ToString(), fftAvg.ToString() };
-            
+                var fftMean = FftVector.Mean();
+                var fftAvg = FftVector.Average();
+
+                var dataPoints = new string[] {PeakValue.ToString(), fftMean.ToString(), fftAvg.ToString()};
+
+                var s = string.Join(seperator, dataPoints);
+
+                if (leadingComma) s += ",";
+
+                return s;
+            }
+            catch (Exception ex)
+            {
+                return GetEmptyString(leadingComma);
+            }
+        }
+
+        private string GetEmptyString(bool leadingComma, string seperator = ",")
+        {
+            // This has to have the same amount of data points as ToString
+            var dataPoints = new string[] { "0", "0", "0" };
             var s = string.Join(seperator, dataPoints);
-
             if (leadingComma) s += ",";
-
             return s;
         }
 

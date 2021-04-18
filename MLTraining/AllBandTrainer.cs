@@ -6,49 +6,9 @@ namespace MLTraining
     {
         public AllBandTrainer() : base("AllBandDrumTypeClassificationModel")
         {
-            Train(new[]
+            Train(new string[]
             {
-                nameof(DrumTypeData.Frequency10      ),
-                nameof(DrumTypeData.Frequency20      ),
-                nameof(DrumTypeData.Frequency250     ),
-                nameof(DrumTypeData.Frequency350     ),
-                nameof(DrumTypeData.Frequency450     ),
-                nameof(DrumTypeData.Frequency570     ),
-                nameof(DrumTypeData.Frequency700     ),
-                nameof(DrumTypeData.Frequency840     ),
-                nameof(DrumTypeData.Frequency1000    ),
-                nameof(DrumTypeData.Frequency1170    ),
-                nameof(DrumTypeData.Frequency1370    ),
-                nameof(DrumTypeData.Frequency1600    ),
-                nameof(DrumTypeData.Frequency1850    ),
-                nameof(DrumTypeData.Frequency2000    ),
-                nameof(DrumTypeData.Frequency2150    ),
-                nameof(DrumTypeData.Frequency2500    ),
-                nameof(DrumTypeData.Frequency2900    ),
-                nameof(DrumTypeData.Frequency3000    ),
-                nameof(DrumTypeData.Frequency3400    ),
-                nameof(DrumTypeData.Frequency4000    ),
-                nameof(DrumTypeData.Frequency4800    ),
-                nameof(DrumTypeData.Frequency5000    ),
-                nameof(DrumTypeData.Frequency5800    ),
-                nameof(DrumTypeData.Frequency6000    ),
-                nameof(DrumTypeData.Frequency7000    ),
-                nameof(DrumTypeData.Frequency8000    ),
-                nameof(DrumTypeData.Frequency8500    ),
-                nameof(DrumTypeData.Frequency9000    ),
-                nameof(DrumTypeData.Frequency10000   ),
-                nameof(DrumTypeData.Frequency10500   ),
-                nameof(DrumTypeData.Frequency11000   ),
-                nameof(DrumTypeData.Frequency12000   ),
-                nameof(DrumTypeData.Frequency13000   ),
-                nameof(DrumTypeData.Frequency13500   ),
-                nameof(DrumTypeData.Frequency14000   ),
-                nameof(DrumTypeData.Frequency15000   ),
-                nameof(DrumTypeData.Frequency16000   ),
-                nameof(DrumTypeData.Frequency17000   ),
-                nameof(DrumTypeData.Frequency18000   ),
-                nameof(DrumTypeData.Frequency19000   ),
-                nameof(DrumTypeData.Frequency20000   )
+                    nameof(DrumTypeData.f10),nameof(DrumTypeData.f10Mean),nameof(DrumTypeData.f10Avg),nameof(DrumTypeData.f20),nameof(DrumTypeData.f20Mean),nameof(DrumTypeData.f20Avg),nameof(DrumTypeData.f250),nameof(DrumTypeData.f250Mean),nameof(DrumTypeData.f250Avg),nameof(DrumTypeData.f350),nameof(DrumTypeData.f350Mean),nameof(DrumTypeData.f350Avg),nameof(DrumTypeData.f450),nameof(DrumTypeData.f450Mean),nameof(DrumTypeData.f450Avg),nameof(DrumTypeData.f570),nameof(DrumTypeData.f570Mean),nameof(DrumTypeData.f570Avg),nameof(DrumTypeData.f700),nameof(DrumTypeData.f700Mean),nameof(DrumTypeData.f700Avg),nameof(DrumTypeData.f840),nameof(DrumTypeData.f840Mean),nameof(DrumTypeData.f840Avg),nameof(DrumTypeData.f1000),nameof(DrumTypeData.f1000Mean),nameof(DrumTypeData.f1000Avg),nameof(DrumTypeData.f1170),nameof(DrumTypeData.f1170Mean),nameof(DrumTypeData.f1170Avg),nameof(DrumTypeData.f1370),nameof(DrumTypeData.f1370Mean),nameof(DrumTypeData.f1370Avg),nameof(DrumTypeData.f1600),nameof(DrumTypeData.f1600Mean),nameof(DrumTypeData.f1600Avg),nameof(DrumTypeData.f1850),nameof(DrumTypeData.f1850Mean),nameof(DrumTypeData.f1850Avg),nameof(DrumTypeData.f2000),nameof(DrumTypeData.f2000Mean),nameof(DrumTypeData.f2000Avg),nameof(DrumTypeData.f2150),nameof(DrumTypeData.f2150Mean),nameof(DrumTypeData.f2150Avg),nameof(DrumTypeData.f2500),nameof(DrumTypeData.f2500Mean),nameof(DrumTypeData.f2500Avg),nameof(DrumTypeData.f2900),nameof(DrumTypeData.f2900Mean),nameof(DrumTypeData.f2900Avg),nameof(DrumTypeData.f3000),nameof(DrumTypeData.f3000Mean),nameof(DrumTypeData.f3000Avg),nameof(DrumTypeData.f3400),nameof(DrumTypeData.f3400Mean),nameof(DrumTypeData.f3400Avg),nameof(DrumTypeData.f4000),nameof(DrumTypeData.f4000Mean),nameof(DrumTypeData.f4000Avg),nameof(DrumTypeData.f4800),nameof(DrumTypeData.f4800Mean),nameof(DrumTypeData.f4800Avg),nameof(DrumTypeData.f5000),nameof(DrumTypeData.f5000Mean),nameof(DrumTypeData.f5000Avg),nameof(DrumTypeData.f5800),nameof(DrumTypeData.f5800Mean),nameof(DrumTypeData.f5800Avg),nameof(DrumTypeData.f6000),nameof(DrumTypeData.f6000Mean),nameof(DrumTypeData.f6000Avg),nameof(DrumTypeData.f7000),nameof(DrumTypeData.f7000Mean),nameof(DrumTypeData.f7000Avg),nameof(DrumTypeData.f8000),nameof(DrumTypeData.f8000Mean),nameof(DrumTypeData.f8000Avg),nameof(DrumTypeData.f8500),nameof(DrumTypeData.f8500Mean),nameof(DrumTypeData.f8500Avg),nameof(DrumTypeData.f9000),nameof(DrumTypeData.f9000Mean),nameof(DrumTypeData.f9000Avg),nameof(DrumTypeData.f10000),nameof(DrumTypeData.f10000Mean),nameof(DrumTypeData.f10000Avg),nameof(DrumTypeData.f10500),nameof(DrumTypeData.f10500Mean),nameof(DrumTypeData.f10500Avg),nameof(DrumTypeData.f11000),nameof(DrumTypeData.f11000Mean),nameof(DrumTypeData.f11000Avg),nameof(DrumTypeData.f12000),nameof(DrumTypeData.f12000Mean),nameof(DrumTypeData.f12000Avg),nameof(DrumTypeData.f13000),nameof(DrumTypeData.f13000Mean),nameof(DrumTypeData.f13000Avg),nameof(DrumTypeData.f13500),nameof(DrumTypeData.f13500Mean),nameof(DrumTypeData.f13500Avg),nameof(DrumTypeData.f14000),nameof(DrumTypeData.f14000Mean),nameof(DrumTypeData.f14000Avg),nameof(DrumTypeData.f15000),nameof(DrumTypeData.f15000Mean),nameof(DrumTypeData.f15000Avg),nameof(DrumTypeData.f16000),nameof(DrumTypeData.f16000Mean),nameof(DrumTypeData.f16000Avg),nameof(DrumTypeData.f17000),nameof(DrumTypeData.f17000Mean),nameof(DrumTypeData.f17000Avg),nameof(DrumTypeData.f18000),nameof(DrumTypeData.f18000Mean),nameof(DrumTypeData.f18000Avg),nameof(DrumTypeData.f19000),nameof(DrumTypeData.f19000Mean),nameof(DrumTypeData.f19000Avg),nameof(DrumTypeData.f20000),nameof(DrumTypeData.f20000Mean),nameof(DrumTypeData.f20000Avg),
             });
         }
     }

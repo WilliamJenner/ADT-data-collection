@@ -20,10 +20,9 @@ namespace OnsetDataGeneration
 
         // Create a list of every 1000 between 1 and 20,001 - not sure if inclusive or exclusive so
         protected List<double> CriticalBandFrequencies =>
-            CriticalBands.Select(x => (double)x.CenterFrequencyHz)
-                //.Union(Enumerable.Range(1, 20001)
-                //    .Where(integer => integer % 1000 == 0)
-                //    .Select(Convert.ToDouble))
+            CriticalBands.Select(x => (double)x.CenterFrequencyHz).Union(Enumerable.Range(1, 20001)
+                    .Where(integer => integer % 1000 == 0)
+                    .Select(Convert.ToDouble))
                 .Distinct()
                 .OrderBy(c => c)
                 .ToList();
@@ -35,7 +34,7 @@ namespace OnsetDataGeneration
             ChosenDrum = chosenDrum;
             CriticalBands = BarkScale.BarkScale.CriticalBands();
 
-            CriticalBandFrequencies.ForEach(cbf => Debug.Write($"{cbf},{cbf}Mean,{cbf}Avg,"));
+            CriticalBandFrequencies.ForEach(cbf => Debug.Write(string.Join(",", new string[] { cbf.ToString(), $"{cbf}Mean", $"{cbf}Avg," })));
         }
 
         public abstract void Generate();
@@ -90,7 +89,7 @@ namespace OnsetDataGeneration
         {
             foreach (var frequenciesForMs in theDataWeWant)
             {
-                var frequencyModelString = chosenDrum + ",";
+                var appendum = chosenDrum + ",";
                 var allZeroes = true;
                 var lastItem = criticalBandFrequencies.Last();
 
@@ -98,17 +97,16 @@ namespace OnsetDataGeneration
                 {
                     var theFrequency = frequenciesForMs.FirstOrDefault(f => f.Item1 == criticalBandFrequency);
 
-                    var onsetModel = theFrequency?.Item2 ?? new OnsetPeakModel(0, new float[0]);
+                    var valueToWrite = theFrequency == null ? new OnsetPeakModel(0, new float[0]) : theFrequency.Item2;
 
-                    if (onsetModel.PeakValue > 0) allZeroes = false;
+                    if (valueToWrite.PeakValue > 0) allZeroes = false;
 
                     var isLastItem = lastItem == criticalBandFrequency;
-
-                    frequencyModelString += onsetModel.ToString(leadingComma: !isLastItem);
+                    appendum += valueToWrite.ToString(leadingComma: !isLastItem);
                 }
 
                 if (!allZeroes)
-                    sb.AppendLine(frequencyModelString);
+                    sb.AppendLine(appendum);
             }
         }
     }
