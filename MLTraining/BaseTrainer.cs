@@ -47,7 +47,6 @@ namespace MLTraining
 
         public void Train(string[] columns)
         {
-            Console.WriteLine("================================");
             //1.
             BuildTrainEvaluateAndSaveModel(MlContext, columns);
             //FitAndCrossValidate(MlContext, columns, true);
@@ -73,24 +72,26 @@ namespace MLTraining
                 .Append(mlContext.Transforms.Concatenate("Features", inputColumnNames));
 
             // STEP 3: Set the training algorithm, then append the trainer to the pipeline  
-            var trainer = mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features")
+            var trainer = mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features", historySize: 100, optimizationTolerance: 1E-20f)
             .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
+
+            //var trainer = 
+            //    mlContext.MulticlassClassification.Trainers
+            //        .SdcaMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features")
+            //    .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
 
             var trainingPipeline = dataProcessPipeline.Append(trainer);
 
             // STEP 4: Train the model fitting to the DataSet
-            Console.WriteLine("=============== Training the model ===============");
             ITransformer trainedModel = trainingPipeline.Fit(trainingDataView);
 
             // STEP 5: Evaluate the model and show accuracy stats
-            Console.WriteLine("===== Evaluating Model's accuracy with Test data =====");
             var predictions = trainedModel.Transform(testDataView);
             var metrics = mlContext.MulticlassClassification.Evaluate(predictions, nameof(DrumTypeData.Type), "Score");
             PrintMultiClassClassificationMetrics(_modelName, metrics);
 
             // STEP 6: Save/persist the trained model to a .ZIP file
             mlContext.Model.Save(trainedModel, trainingDataView.Schema, ModelPath);
-            Console.WriteLine("The model is saved to {0}", ModelPath);
         }
 
         public void FitAndCrossValidate(MLContext mlContext, string[] inputColumnNames, bool save = false)

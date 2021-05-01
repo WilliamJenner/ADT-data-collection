@@ -17,7 +17,7 @@ namespace OnsetPredictions
         public bool Broadcasting = false;
         
         private System.Timers.Timer Timer;
-        private ConcurrentBag<Tuple<DrumSoundType, double>> _drumSounds;
+        private ConcurrentBag<Tuple<DrumSoundType, double, string>> _drumSounds;
         private MidiOutputDevice dev = MidiDevice.Outputs[3];
 
         /// <summary>
@@ -28,14 +28,14 @@ namespace OnsetPredictions
         public MidiBroadcaster(bool broadcasting, double interval = 100)
         {
             Broadcasting = broadcasting;
-            _drumSounds = new ConcurrentBag<Tuple<DrumSoundType, double>>();
+            _drumSounds = new ConcurrentBag<Tuple<DrumSoundType, double, string>>();
             SetTimer(interval);
             dev.Open();
         }
 
-        public void Broadcast(DrumSoundType drumType, double highScore)
+        public void Broadcast(DrumSoundType drumType, double highScore, string modelName)
         {
-            _drumSounds.Add(new Tuple<DrumSoundType, double>(drumType, highScore));
+            _drumSounds.Add(new Tuple<DrumSoundType, double, string>(drumType, highScore, modelName));
         }
 
         /// <summary>
@@ -66,13 +66,13 @@ namespace OnsetPredictions
 
                 // Transform queued sounds into their midi values
                 var midiValues = _drumSounds.Distinct(new MidiDrumScoreEqualityComparer())
-                    .Select(n => new {MidiDrum = n.Item1.ToMidiDrum(), HighScore = n.Item2 })
+                    .Select(n => new {MidiDrum = n.Item1.ToMidiDrum(), HighScore = n.Item2, ModelName = n.Item3 })
                     .ToList();
                 
                 // Play each value
                 foreach (var midiValue in midiValues)
                 {
-                    Console.WriteLine($"{midiValue.HighScore:##.000}% | \t{midiValue.MidiDrum}");
+                    Console.WriteLine($"{DateTime.Now:T}:\t{midiValue.ModelName.Substring(0, 3)} \t|\t {midiValue.HighScore:##.000}% \t|\t {midiValue.MidiDrum}");
 
                     // Transform the value to the correct note
                     var note = MidiUtility.NoteIdToNote((byte)midiValue.MidiDrum, true);

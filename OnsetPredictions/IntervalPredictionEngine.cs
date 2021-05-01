@@ -11,12 +11,15 @@ namespace OnsetPredictions
 {
     public class IntervalPredictionEngine : IDisposable
     {
+        // % score for a prediction to be broadcast
+        private const int INTERVAL_SCORE_TOLERANCE = 80;
+
         private readonly string _modelName;
         private Func<DrumTypeData> GetLatestData;
         private PredictionEngine<DrumTypeData, DrumTypePrediction> PredictionEngine;
         private System.Timers.Timer Timer;
         public bool Predicting = false;
-        private Action<DrumSoundType, double> OnPredict;
+        private Action<DrumSoundType, double, string> OnPredict;
 
         /// <summary>
         /// Predicts the type of drum on an interval (specified in milliseconds).
@@ -25,7 +28,7 @@ namespace OnsetPredictions
         /// <param name="getLatestData">Func with no parameters which returns the latest DrumTypeData</param>
         /// <param name="onPredict">Callback which returns predictions</param>
         /// <param name="interval">Interval for the timer (milliseconds). Default is 100 </param>
-        public IntervalPredictionEngine(string modelName, Func<DrumTypeData> getLatestData, Action<DrumSoundType, double> onPredict, double interval = 100)
+        public IntervalPredictionEngine(string modelName, Func<DrumTypeData> getLatestData, Action<DrumSoundType, double, string> onPredict, double interval = 100)
         {
             _modelName = modelName;
             GetLatestData = getLatestData;
@@ -67,7 +70,7 @@ namespace OnsetPredictions
                 {
                     var prediction = PredictionEngine.Predict(latestData);
                     //PrintScore(prediction.Score);
-
+                    latestData.ResetData();
                     // We will have to loop through the scores anyway to get highest, may as well do it all in one go
                     float highScore = 0;
                     int highScoreIndex = 0;
@@ -80,10 +83,12 @@ namespace OnsetPredictions
                         }
                     }
 
-                    if (highScore * 100 > 90)
+                    if (highScore * 100 > INTERVAL_SCORE_TOLERANCE)
                     {
-                        OnPredict((DrumSoundType) highScoreIndex, highScore * 100);
+                        OnPredict((DrumSoundType) highScoreIndex, highScore * 100, _modelName);
                     }
+
+                    
                 }
             }
         }

@@ -5,5 +5,7 @@
         Kick,
         Snare,
         Cymbal,
+        LowTom,
+        HighTom,
     }
 }

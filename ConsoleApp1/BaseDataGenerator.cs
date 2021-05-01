@@ -34,7 +34,7 @@ namespace OnsetDataGeneration
             ChosenDrum = chosenDrum;
             CriticalBands = BarkScale.BarkScale.CriticalBands();
 
-            CriticalBandFrequencies.ForEach(cbf => Debug.Write(string.Join(",", new string[] { cbf.ToString(), $"{cbf}Mean", $"{cbf}Avg," })));
+            CriticalBandFrequencies.ForEach(cbf => Debug.Write(string.Join(",", new string[] { cbf.ToString(), $"{cbf}Mean", $"{cbf}Avg", $"{cbf}L1," })));
         }
 
         public abstract void Generate();

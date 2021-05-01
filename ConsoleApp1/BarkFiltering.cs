@@ -20,8 +20,6 @@ namespace OnsetDataGeneration
         /// </summary>
         private void FilterSources()
         {
-
-
             //Parallel.ForEach(barkScale.scale, (band) =>
             //{
             //    //var copy = (BiQuadFilterSource) BiQuadFilterSource.cl

@@ -1,21 +1,24 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using CSCore;
 using CSCore.DSP;
 using CSCore.SoundIn;
 using CSCore.Streams;
+using OnsetDataGeneration;
 
 namespace OnsetPredictions
 {
     public class OnsetDetector
     {
-        private readonly float[] Buffer;
+        private float[] Buffer;
         private readonly SoundInSource SoundInSource;
-        private readonly Action<float, double> DetectionCallback;
+        private readonly Action<OnsetPeakModel, double> DetectionCallback;
         public double Frequency;
         private SingleBlockNotificationStream NotificationSource;
         private readonly PeakMeter pm;
         private float PreviousPeak;
+        private FftProvider FftProvider;
 
 
         public ConcurrentDictionary<string, float> ProcessedOnsetPeaks;
@@ -30,7 +33,7 @@ namespace OnsetPredictions
         /// <param name="frequency">Frequency for the applied BandpassFilter</param>
         /// <param name="peakDetectionCallback">callback for when a peak is processed</param>
         /// <param name="interval">Interval between peak calculations. The interval is specified in milliseconds. </param>
-        public OnsetDetector(ISoundIn soundIn, double frequency, Action<float, double> peakDetectionCallback, int interval = 100)
+        public OnsetDetector(ISoundIn soundIn, double frequency, Action<OnsetPeakModel, double> peakDetectionCallback, int interval = 100)
         {
             Frequency = frequency;
             Detecting = false;
@@ -38,6 +41,7 @@ namespace OnsetPredictions
             ProcessedOnsetPeaks = new ConcurrentDictionary<string, float>();
             SoundInSource = new SoundInSource(soundIn);
             NotificationSource = new SingleBlockNotificationStream(SoundInSource.ToSampleSource());
+            FftProvider = new FftProvider(SoundInSource.WaveFormat.Channels, FftSize.Fft4096);
             Buffer = new float[SoundInSource.WaveFormat.BytesPerSecond / 2];
             SoundInSource.DataAvailable += GetDataAvailable();
 
@@ -45,7 +49,7 @@ namespace OnsetPredictions
                 .AppendSource(x =>
                 {
                     // double the volume to catch more peaks
-                    var biQuad = new GainSource(x) { Volume = 1f };
+                    var biQuad = new GainSource(x) { Volume = 0.6f };
                     return biQuad;
                 })
                 .AppendSource(x =>
@@ -63,21 +67,34 @@ namespace OnsetPredictions
 
         private void OnPmOnPeakCalculated(object sender, PeakEventArgs e)
         {
-            if (Detecting)
+            try
             {
-                var activated = e.PeakValue > 0.5 && e.PeakValue > PreviousPeak;
-
-                var newPeakValue = activated ? e.PeakValue : 0;
-
-                if (activated)
+                if (Detecting)
                 {
-                    //Console.WriteLine($"ONSET AT {Frequency}");
+                    var activated = e.PeakValue > 0.5 && e.PeakValue > PreviousPeak;
+                    var fftData = new float[(int)FftSize.Fft4096];
+
+                    // If activated and this peak is greater than the previous
+                    if (activated)
+                    {
+                        // Write FFT if activated
+                        var numberOfSamples = (int)(SoundInSource.WaveFormat.BytesPerSecond / 2.0) / SoundInSource.WaveFormat.SampleRate;
+                        FftProvider.Add(Buffer, numberOfSamples);
+                        FftProvider.GetFftData(fftData);
+                    }
+
+                    var newPeakValue = activated ? e.PeakValue : 0;
+
+                    var onsetPeak = new OnsetPeakModel(newPeakValue, fftData);
+
+                    // Assign a new value to PreviousPeak
+                    PreviousPeak = e.PeakValue;
+                    DetectionCallback(onsetPeak, this.Frequency);
                 }
-
-                // Assign a new value to PreviousPeak
-                PreviousPeak = e.PeakValue;
-
-                DetectionCallback(newPeakValue, Frequency);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
             }
         }
 

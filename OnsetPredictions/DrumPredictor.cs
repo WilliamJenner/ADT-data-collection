@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CSCore.SoundIn;
 using Microsoft.ML;
 using MLTraining.DataStructures;
+using OnsetDataGeneration;
 
 namespace OnsetPredictions
 {
@@ -26,31 +27,30 @@ namespace OnsetPredictions
         private ConcurrentDictionary<double, OnsetDetector> OnsetWriters = new ConcurrentDictionary<double, OnsetDetector>();
         private ConcurrentBag<IntervalPredictionEngine> PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>();
         private MidiBroadcaster MidiBroadcaster;
-        private DrumTypeData LatestData;
         private ISoundIn soundIn;
+
+        private DrumTypeData LatestHighFreqData;
+        private DrumTypeData LatestMedFreqData;
+        private DrumTypeData LatestLowFreqData;
+        private DrumTypeData LatestData;
+
 
         public DrumPredictor(ISoundIn soundIn)
         {
             this.soundIn = soundIn;
             MidiBroadcaster = new MidiBroadcaster(true);
+            
+            LatestHighFreqData = new DrumTypeData();
+            LatestMedFreqData = new DrumTypeData();
+            LatestLowFreqData = new DrumTypeData();
             LatestData = new DrumTypeData();
+
             PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>()
             {
-                new IntervalPredictionEngine("HighFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                new IntervalPredictionEngine("MedFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                new IntervalPredictionEngine("LowFreqDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-
+                new IntervalPredictionEngine("HighFrequencyDrumTypeClassificationModel", () => LatestHighFreqData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine("MediumFrequencyDrumTypeClassificationModel", () => LatestMedFreqData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine("LowFrequencyDrumTypeClassificationModel", () => LatestLowFreqData, MidiBroadcaster.Broadcast),
                 new IntervalPredictionEngine("AllBandDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-
-                //new IntervalPredictionEngine("LowFreqFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                //new IntervalPredictionEngine("LowFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-
-                //new IntervalPredictionEngine("MedFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                //new IntervalPredictionEngine("MedFreqFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-
-                //new IntervalPredictionEngine("HighFreqCeilingDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-                //new IntervalPredictionEngine("HighFrequencyFloorDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
-
             };
 
             Reset();
@@ -92,9 +92,22 @@ namespace OnsetPredictions
             OnsetWriters.Clear();
         }
 
-        private void PeakDetectionCallback(float peakValue, double frequency)
+        private void PeakDetectionCallback(OnsetPeakModel peakValue, double frequency)
         {
-            LatestData.SetValues(peakValue, frequency);
+            LatestData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
+
+            if (frequency < 2000)
+            {
+                LatestLowFreqData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
+            }  
+            else if (frequency >= 2000 && frequency < 10000)
+            {
+                LatestMedFreqData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
+            }
+            else
+            {
+                LatestHighFreqData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
+            }
         }
     }
 }

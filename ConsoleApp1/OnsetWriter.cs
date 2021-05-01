@@ -70,7 +70,7 @@ namespace OnsetDataGeneration
                      .AppendSource(x =>
                     {
                         // double the volume to catch more peaks
-                        var biQuad = new GainSource(x) { Volume = boosted ? 20f : 1f };
+                        var biQuad = new GainSource(x) { Volume = boosted ? 20f : 0.6f };
                         return biQuad;
                     })
                     .AppendSource(x =>
