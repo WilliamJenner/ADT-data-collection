@@ -16,7 +16,7 @@ namespace OnsetPredictions.BarkScale
 
         public static List<CriticalBandModel> CriticalBands()
         {
-            JArray jArray = JArray.Parse(File.ReadAllText(Path.Combine("C:\\source\\ADT\\ConsoleApp1\\BarkScale", "barkScale.json")));
+            JArray jArray = JArray.Parse(File.ReadAllText(Path.Combine("C:\\source\\ADT\\OnsetPredictions\\BarkScale", "barkScale.json")));
             return jArray.ToObject<List<CriticalBandModel>>();
         }
     }

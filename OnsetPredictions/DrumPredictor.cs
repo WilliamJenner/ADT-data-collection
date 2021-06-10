@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using CSCore.SoundIn;
 using Microsoft.ML;
 using MLTraining.DataStructures;
-using OnsetDataGeneration;
 
 namespace OnsetPredictions
 {
@@ -64,7 +63,7 @@ namespace OnsetPredictions
         {
             Parallel.ForEach(frequencies, frequency =>
             {
-                var writer = new OnsetDetector(this.soundIn, frequency, PeakDetectionCallback);
+                var writer = new OnsetDetector(soundIn, frequency, PeakDetectionCallback);
                 OnsetWriters.AddOrUpdate(frequency, writer, (d, oldWriter) => writer);
             });
         }

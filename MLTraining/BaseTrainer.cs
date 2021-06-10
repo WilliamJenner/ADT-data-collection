@@ -10,12 +10,9 @@ namespace MLTraining
 {
     public abstract class BaseTrainer
     {
-        private readonly string _modelName;
-
-        //private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\ConsoleApp1\\sound\\experiment";
-        private readonly string BaseDatasetsRelativePath = "C:\\source\\ADT\\MLTraining\\data";
-
-        protected readonly string BaseModelsRelativePath = "C:\\source\\ADT\\MLTraining\\models";
+        private readonly string ModelName;
+        private readonly string BaseDatasetsRelativePath;
+        protected readonly string BaseModelsRelativePath;
 
         private readonly string ModelPath;
         protected readonly string ModelRelativePath;
@@ -29,42 +26,41 @@ namespace MLTraining
 
         protected MLContext MlContext;
 
-        protected BaseTrainer(string modelName)
+        protected BaseTrainer(string modelName, string baseDatasetsRelativePath, string baseModelsRelativePath)
         {
-            _modelName = modelName;
+            ModelName = modelName;
             MlContext = new MLContext(0);
-            ModelRelativePath = $"{BaseModelsRelativePath}\\{modelName}.zip";
-            TestDataRelativePath = $"{BaseDatasetsRelativePath}\\test.csv";
-            TrainDataRelativePath = $"{BaseDatasetsRelativePath}\\train.csv";
-            AllDataRelativePath = $"{BaseDatasetsRelativePath}\\all.csv";
-            ModelPath = GetAbsolutePath(ModelRelativePath);
-            TestDataPath = GetAbsolutePath(TestDataRelativePath);
-            TrainDataPath = GetAbsolutePath(TrainDataRelativePath);
-            AllDataPath = GetAbsolutePath(AllDataRelativePath);
+
+            BaseDatasetsRelativePath = baseDatasetsRelativePath;
+            BaseModelsRelativePath = baseModelsRelativePath;
+
+            var modelPath = $"{modelName}.zip";
+            var testFile = $"test.csv";
+            var trainFile = $"train.csv";
+            var allFile = $"all.csv";
+
+            ModelPath = Path.Combine(baseModelsRelativePath, modelPath);
+            TestDataPath = Path.Combine(baseDatasetsRelativePath, testFile);
+            TrainDataPath = Path.Combine(baseDatasetsRelativePath, trainFile);
+            AllDataPath = Path.Combine(baseDatasetsRelativePath, allFile);
         }
 
-        private string AppPath => Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
-
-        public void Train(string[] columns)
+        protected MulticlassClassificationMetrics Train(string[] columns)
         {
-            //1.
-            BuildTrainEvaluateAndSaveModel(MlContext, columns);
-            //FitAndCrossValidate(MlContext, columns, true);
-
+            var metrics = BuildTrainEvaluateAndSaveModel(MlContext, columns);
             PredictExamples(MlContext);
+
+            return metrics;
         }
 
-        private void BuildTrainEvaluateAndSaveModel(MLContext mlContext, string[] inputColumnNames)
+        private MulticlassClassificationMetrics BuildTrainEvaluateAndSaveModel(MLContext mlContext, string[] inputColumnNames)
         {
             var featuresColumnName = "Features";
             var drumTypeColumnName = nameof(DrumTypeData.Type);
             var keyColumn = "KeyColumn";
 
             // STEP 1: Common data loading configuration
-            var trainingDataView = mlContext.Data.LoadFromTextFile<DrumTypeData>(TrainDataPath, hasHeader: true, separatorChar: ',');
-            var testDataView = mlContext.Data.LoadFromTextFile<DrumTypeData>(TestDataPath, hasHeader: true, separatorChar: ',');
-            var allData = mlContext.Data.LoadFromTextFile<DrumTypeData>(AllDataPath, hasHeader: true, separatorChar: ',');
-
+            var testTrainSplit = TrainingDataFactory.GetSplitTrainingData(mlContext, BaseDatasetsRelativePath);
 
             // STEP 2: Common data process configuration with pipeline data transformations
             var dataProcessPipeline = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "KeyColumn",
@@ -75,23 +71,26 @@ namespace MLTraining
             var trainer = mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features", historySize: 100, optimizationTolerance: 1E-20f)
             .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
 
-            //var trainer = 
-            //    mlContext.MulticlassClassification.Trainers
-            //        .SdcaMaximumEntropy(labelColumnName: "KeyColumn", featureColumnName: "Features")
-            //    .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: nameof(DrumTypeData.Type), inputColumnName: "KeyColumn"));
-
             var trainingPipeline = dataProcessPipeline.Append(trainer);
 
             // STEP 4: Train the model fitting to the DataSet
-            ITransformer trainedModel = trainingPipeline.Fit(trainingDataView);
+            ITransformer trainedModel = trainingPipeline.Fit(testTrainSplit.TrainSet);
 
             // STEP 5: Evaluate the model and show accuracy stats
-            var predictions = trainedModel.Transform(testDataView);
-            var metrics = mlContext.MulticlassClassification.Evaluate(predictions, nameof(DrumTypeData.Type), "Score");
-            PrintMultiClassClassificationMetrics(_modelName, metrics);
+            var predictions = trainedModel.Transform(testTrainSplit.TestSet);
+            var metrics = mlContext.MulticlassClassification.Evaluate(predictions, nameof(DrumTypeData.Type));
+            //PrintMultiClassClassificationMetrics(ModelName, metrics);
+
+            if (!Directory.Exists(BaseModelsRelativePath))
+            {
+                Directory.CreateDirectory(BaseModelsRelativePath);
+            }
 
             // STEP 6: Save/persist the trained model to a .ZIP file
-            mlContext.Model.Save(trainedModel, trainingDataView.Schema, ModelPath);
+            mlContext.Model.Save(trainedModel, testTrainSplit.TrainSet.Schema, ModelPath);
+
+            // STEP 7: Return the metrics
+            return metrics;
         }
 
         public void FitAndCrossValidate(MLContext mlContext, string[] inputColumnNames, bool save = false)
@@ -100,7 +99,7 @@ namespace MLTraining
             var testDataView = mlContext.Data.LoadFromTextFile<DrumTypeData>(TestDataPath, hasHeader: true, separatorChar: ',');
             var allData = mlContext.Data.LoadFromTextFile<DrumTypeData>(AllDataPath, hasHeader: true, separatorChar: ',');
 
-            Console.WriteLine($"{DateTime.Now:mm:ss tt zz} | Starting {_modelName}");
+            Console.WriteLine($"{DateTime.Now:mm:ss tt zz} | Starting {ModelName}");
             var dynamicPipeline =
                 // Concatenate all the features together into one column 'Features'.
                 mlContext.Transforms.Concatenate("Features", inputColumnNames)
@@ -115,7 +114,7 @@ namespace MLTraining
             var model = dynamicPipeline.Fit(trainTestSplit.TrainSet);
             // Compute quality metrics on the test set.
             var cvMetrics = mlContext.MulticlassClassification.Evaluate(model.Transform(trainTestSplit.TestSet), labelColumnName: "Type");
-            Console.WriteLine($"{_modelName} accuracy |\t" + cvMetrics.MicroAccuracy);
+            Console.WriteLine($"{ModelName} accuracy |\t" + cvMetrics.MicroAccuracy);
 
             // Now run the 5-fold cross-validation experiment, using the same pipeline.
             var cvResults = mlContext.MulticlassClassification.CrossValidate(allData, dynamicPipeline, numberOfFolds: 5, labelColumnName: "Type");
@@ -123,7 +122,7 @@ namespace MLTraining
             // The results object is an array of 5 elements. For each of the 5 folds, we have metrics, model and scored test data.
             // Let's compute the average micro-accuracy.
             var microAccuracies = cvResults.Select(r => r.Metrics.MicroAccuracy);
-            Console.WriteLine($"{_modelName} Cross Validation Accuracy |\t" + microAccuracies.Average());
+            Console.WriteLine($"{ModelName} Cross Validation Accuracy |\t" + microAccuracies.Average());
 
             
 
@@ -173,16 +172,6 @@ namespace MLTraining
             //{
             //    Console.WriteLine($"{i} : {prediction.Score[i] * 100}");
             //}
-        }
-
-        public string GetAbsolutePath(string relativePath)
-        {
-            var _dataRoot = new FileInfo(typeof(Program).Assembly.Location);
-            var assemblyFolderPath = _dataRoot.Directory.FullName;
-
-            var fullPath = Path.Combine(assemblyFolderPath, relativePath);
-
-            return fullPath;
         }
 
         public void PrintMultiClassClassificationMetrics(string name, MulticlassClassificationMetrics metrics)

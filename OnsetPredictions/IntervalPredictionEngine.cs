@@ -17,7 +17,7 @@ namespace OnsetPredictions
         private readonly string _modelName;
         private Func<DrumTypeData> GetLatestData;
         private PredictionEngine<DrumTypeData, DrumTypePrediction> PredictionEngine;
-        private System.Timers.Timer Timer;
+        private Timer Timer;
         public bool Predicting = false;
         private Action<DrumSoundType, double, string> OnPredict;
 
@@ -48,7 +48,7 @@ namespace OnsetPredictions
         private void SetTimer(double interval)
         {
             // Create a timer with a two second interval.
-            Timer = new System.Timers.Timer(interval);
+            Timer = new Timer(interval);
             // Hook up the Elapsed event for the timer. 
             Timer.Elapsed += OnTimedEvent;
             Timer.AutoReset = true;

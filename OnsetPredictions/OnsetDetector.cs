@@ -5,7 +5,6 @@ using CSCore;
 using CSCore.DSP;
 using CSCore.SoundIn;
 using CSCore.Streams;
-using OnsetDataGeneration;
 
 namespace OnsetPredictions
 {
@@ -89,7 +88,7 @@ namespace OnsetPredictions
 
                     // Assign a new value to PreviousPeak
                     PreviousPeak = e.PeakValue;
-                    DetectionCallback(onsetPeak, this.Frequency);
+                    DetectionCallback(onsetPeak, Frequency);
                 }
             }
             catch (Exception ex)
