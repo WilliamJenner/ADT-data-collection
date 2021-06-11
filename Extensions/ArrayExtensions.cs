@@ -9,7 +9,7 @@ namespace Extensions
     {
         public static bool IndexExists<T>(this T[] array, int index)
         {
-            return array.ElementAtOrDefault(index) == null;
+            return array.ElementAtOrDefault(index) != null;
         }
     }
 }

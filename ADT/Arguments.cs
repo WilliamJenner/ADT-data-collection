@@ -9,7 +9,7 @@ namespace ADT
         public const string Help = "--help";
         public const string Export = "--export";
         public const string Train = "--train";
-        public const string Port = "--port";
+        public const string ADT = "--adt";
 
     }
 }

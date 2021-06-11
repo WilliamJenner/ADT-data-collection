@@ -2,7 +2,7 @@
   "profiles": {
     "ADT": {
       "commandName": "Project",
-      "commandLineArgs": "--train C:\\source\\ADT\\ExportedData"
+      "commandLineArgs": "--export C:\\source\\ADT\\ExportedData"
     }
   }
 }

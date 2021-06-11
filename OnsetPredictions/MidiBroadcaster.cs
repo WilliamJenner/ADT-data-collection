@@ -18,15 +18,17 @@ namespace OnsetPredictions
         
         private System.Timers.Timer Timer;
         private ConcurrentBag<Tuple<DrumSoundType, double, string>> _drumSounds;
-        private MidiOutputDevice dev = MidiDevice.Outputs[3];
+        private MidiOutputDevice dev;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="broadcasting"></param>
+        /// <param name="outputDevice"></param>
         /// <param name="interval">Interval for the internal timer (milliseconds). Default is 100 </param>
-        public MidiBroadcaster(bool broadcasting, double interval = 100)
+        public MidiBroadcaster(bool broadcasting, MidiOutputDevice outputDevice, double interval = 100)
         {
+            dev = outputDevice;
             Broadcasting = broadcasting;
             _drumSounds = new ConcurrentBag<Tuple<DrumSoundType, double, string>>();
             SetTimer(interval);

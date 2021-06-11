@@ -10,6 +10,7 @@ using Microsoft.ML.Data;
 using MLTraining;
 using MLTraining.DataStructures;
 using OnsetExport;
+using OnsetPredictions;
 
 namespace ADT
 {
@@ -22,7 +23,7 @@ namespace ADT
                 // No arguments, continue with default behaviour
                 if (args.Length == 0)
                 {
-                    Transcribe(MidiDevice.Outputs.First());
+                    Transcribe(MidiDevice.Outputs.First(), "C:\\source\\ADT\\ExportedData");
                 }
                 else
                 {
@@ -121,8 +122,8 @@ namespace ADT
                 case Arguments.Train:
                     TrainModel(args);
                     break;
-                case Arguments.Port:
-                    ProcessPortArgs(args);
+                case Arguments.ADT:
+                    ProcessADTArgs(args);
                     break;
                 default:
                     throw new ArgumentException("Argument does not match expected", nameof(args));
@@ -151,41 +152,61 @@ namespace ADT
             PrettyPrintTrainingMetrics(metrics);
         }
 
-        static void ProcessPortArgs(string[] args)
+        static void ProcessADTArgs(string[] args)
         {
-            int number;
-            bool success = Int32.TryParse(args[1], out number);
+           
+
+            if (args.IndexExists(1))
+            {
+                // check if the arg is show
+                if (args[1] == "show")
+                {
+                    // Using a for loop we want the index
+                    for (var index = 0; index < MidiDevice.Outputs.Count; index++)
+                    {
+                        Console.WriteLine($"Port {index} | {MidiDevice.Outputs[index].Name}");
+                    }
+                }
+                // assume it is the directory arg
+                else
+                {
+                    int number;
+                    bool success = Int32.TryParse(args[2], out number);
+
+                    if (success)
+                    {
+                        // Minus 1 from the count as number is zero indexed
+                        if (number > (MidiDevice.Outputs.Count - 1))
+                        {
+                            throw new ArgumentException("Chosen midi port does not exist");
+                        }
+
+                        Transcribe(MidiDevice.Outputs[number], args[1]);
+                    }
+                }
+                
+                
+            }
 
             // If success, then transcribe to a specific port
             // Else, try second arg for "show", else, throw
-            if (success)
-            {
-                // Minus 1 from the count as number is zero indexed
-                if (number > (MidiDevice.Outputs.Count - 1))
-                {
-                    throw new ArgumentException("Chosen midi port does not exist");
-                }
-
-                Transcribe(MidiDevice.Outputs[number]);
-            }
+            
             else
             {
-                if (args[1] != "show")
-                {
-                    throw new ArgumentException("Second --port argument not recognized", nameof(args));
-                }
                 
-                // Using a for loop we want the index
-                for (var index = 0; index < MidiDevice.Outputs.Count; index++)
-                {
-                    Console.WriteLine($"Port {index} | {MidiDevice.Outputs[index].Name}");
-                }
             }
         }
 
-        static void Transcribe(MidiOutputDevice midiOutputDevice)
+        static void Transcribe(MidiOutputDevice midiOutputDevice, string modelDirectory)
         {
+            Console.WriteLine("Beginning predictions!");
+            Console.WriteLine("Press any key to stop...");
 
+            DrumPredictor.Predict(midiOutputDevice, modelDirectory);
+
+            Console.ReadKey();
+            
+            DrumPredictor.Stop();
         }
 
         private static int ReadInteger(params int[] validValues)
