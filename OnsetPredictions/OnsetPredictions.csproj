@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,13 +10,13 @@
     <PackageReference Include="CSCore" Version="1.2.1.2" />
     <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
     <PackageReference Include="Microsoft.ML" Version="1.5.5" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Extensions\Extensions.csproj" />
     <ProjectReference Include="..\Midi\Midi.csproj" />
     <ProjectReference Include="..\MLTraining\MLTraining.csproj" />
+    <ProjectReference Include="..\OnsetDetection\OnsetDetection.csproj" />
   </ItemGroup>
 
 </Project>

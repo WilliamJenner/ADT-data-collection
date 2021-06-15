@@ -2,7 +2,7 @@
   "profiles": {
     "ADT": {
       "commandName": "Project",
-      "commandLineArgs": "--port show"
+      "commandLineArgs": "--help"
     }
   }
 }

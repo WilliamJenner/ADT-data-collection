@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Timers;
@@ -12,12 +13,12 @@ namespace OnsetPredictions
     public class IntervalPredictionEngine : IDisposable
     {
         // % score for a prediction to be broadcast
-        private const int INTERVAL_SCORE_TOLERANCE = 80;
+        private const int INTERVAL_SCORE_TOLERANCE = 20;
 
-        private readonly string _modelName;
+        private readonly string _modelPath;
         private Func<DrumTypeData> GetLatestData;
         private PredictionEngine<DrumTypeData, DrumTypePrediction> PredictionEngine;
-        private System.Timers.Timer Timer;
+        private Timer Timer;
         public bool Predicting = false;
         private Action<DrumSoundType, double, string> OnPredict;
 
@@ -28,14 +29,14 @@ namespace OnsetPredictions
         /// <param name="getLatestData">Func with no parameters which returns the latest DrumTypeData</param>
         /// <param name="onPredict">Callback which returns predictions</param>
         /// <param name="interval">Interval for the timer (milliseconds). Default is 100 </param>
-        public IntervalPredictionEngine(string modelName, Func<DrumTypeData> getLatestData, Action<DrumSoundType, double, string> onPredict, double interval = 100)
+        public IntervalPredictionEngine(string modelPath, Func<DrumTypeData> getLatestData, Action<DrumSoundType, double, string> onPredict, double interval = 100)
         {
-            _modelName = modelName;
+            _modelPath = modelPath;
             GetLatestData = getLatestData;
             OnPredict = onPredict;
             var mlContext = new MLContext();
             DataViewSchema predictionPipelineSchema;
-            ITransformer predictionPipeline = mlContext.Model.Load($"C:\\source\\ADT\\MLTraining\\models\\{modelName}.zip", out predictionPipelineSchema);
+            ITransformer predictionPipeline = mlContext.Model.Load(modelPath, out predictionPipelineSchema);
             // Create PredictionEngine
             PredictionEngine = mlContext.Model.CreatePredictionEngine<DrumTypeData, DrumTypePrediction>(predictionPipeline);
             SetTimer(interval);
@@ -48,7 +49,7 @@ namespace OnsetPredictions
         private void SetTimer(double interval)
         {
             // Create a timer with a two second interval.
-            Timer = new System.Timers.Timer(interval);
+            Timer = new Timer(interval);
             // Hook up the Elapsed event for the timer. 
             Timer.Elapsed += OnTimedEvent;
             Timer.AutoReset = true;
@@ -64,6 +65,7 @@ namespace OnsetPredictions
         {
             if (Predicting)
             {
+                Debug.WriteLine($"{DateTime.Now:mm’:’ss.fffffffK} | Prediction {_modelPath}");
                 var latestData = GetLatestData();
 
                 if (latestData.HasValue())
@@ -85,10 +87,8 @@ namespace OnsetPredictions
 
                     if (highScore * 100 > INTERVAL_SCORE_TOLERANCE)
                     {
-                        OnPredict((DrumSoundType) highScoreIndex, highScore * 100, _modelName);
+                        OnPredict((DrumSoundType) highScoreIndex, highScore * 100, _modelPath);
                     }
-
-                    
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace OnsetPredictions
             //{
 
                 Console.WriteLine("************************************************************");
-                Console.WriteLine($"*    {_modelName} Prediction {DateTime.Now:O}   ");
+                Console.WriteLine($"*    {_modelPath} Prediction {DateTime.Now:O}   ");
                 Console.WriteLine("*-----------------------------------------------------------");
 
             for (int i = 0; i < score.Length; i++)

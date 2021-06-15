@@ -18,15 +18,17 @@ namespace OnsetPredictions
         
         private System.Timers.Timer Timer;
         private ConcurrentBag<Tuple<DrumSoundType, double, string>> _drumSounds;
-        private MidiOutputDevice dev = MidiDevice.Outputs[3];
+        private MidiOutputDevice dev;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="broadcasting"></param>
+        /// <param name="outputDevice"></param>
         /// <param name="interval">Interval for the internal timer (milliseconds). Default is 100 </param>
-        public MidiBroadcaster(bool broadcasting, double interval = 100)
+        public MidiBroadcaster(bool broadcasting, MidiOutputDevice outputDevice, double interval = 100)
         {
+            dev = outputDevice;
             Broadcasting = broadcasting;
             _drumSounds = new ConcurrentBag<Tuple<DrumSoundType, double, string>>();
             SetTimer(interval);
@@ -62,7 +64,6 @@ namespace OnsetPredictions
             // Open the midi port
             if (dev.IsOpen)
             {
-          
 
                 // Transform queued sounds into their midi values
                 var midiValues = _drumSounds.Distinct(new MidiDrumScoreEqualityComparer())
@@ -72,21 +73,28 @@ namespace OnsetPredictions
                 // Play each value
                 foreach (var midiValue in midiValues)
                 {
-                    Console.WriteLine($"{DateTime.Now:T}:\t{midiValue.ModelName.Substring(0, 3)} \t|\t {midiValue.HighScore:##.000}% \t|\t {midiValue.MidiDrum}");
+                    Console.WriteLine($"{DateTime.Now:T}: {midiValue.HighScore:##.000}% \t|\t {midiValue.MidiDrum}");
 
+                    
+
+                }
+
+                var distinctDrums = midiValues.Select(m => m.MidiDrum).Distinct();
+
+                foreach (var distinctDrum in distinctDrums)
+                {
                     // Transform the value to the correct note
-                    var note = MidiUtility.NoteIdToNote((byte)midiValue.MidiDrum, true);
+                    var note = MidiUtility.NoteIdToNote((byte)distinctDrum, true);
                     dev.Send(new MidiMessageNoteOn(note, 127, 10));
-
                 }
 
                 Thread.Sleep(10);
 
-                foreach (var midiValue in midiValues)
+                foreach (var distinctDrum in distinctDrums)
                 {
 
                     // Transform the value to the correct note
-                    var note = MidiUtility.NoteIdToNote((byte)midiValue.MidiDrum, true);
+                    var note = MidiUtility.NoteIdToNote((byte)distinctDrum, true);
                     dev.Send(new MidiMessageNoteOff(note, 127, 10));
                 }
 

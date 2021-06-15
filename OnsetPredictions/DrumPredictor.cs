@@ -6,39 +6,30 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using CSCore.SoundIn;
+using M;
 using Microsoft.ML;
 using MLTraining.DataStructures;
-using OnsetDataGeneration;
+using OnsetDetection;
 
 namespace OnsetPredictions
 {
-    public interface IOnsetWriterBuilder
+    public static class DrumPredictor
     {
-        void Build(IEnumerable<double> frequencies);
-        void DetectAndBroadcast();
-        ConcurrentDictionary<double, OnsetDetector> GetOnsetWriters();
-        void Reset();
-    }
+        private static ConcurrentBag<IntervalPredictionEngine> PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>();
+        private static MidiBroadcaster MidiBroadcaster;
 
-    public class DrumPredictor : IOnsetWriterBuilder
-    {
-        // https://docs.microsoft.com/en-us/dotnet/api/system.collections.concurrent.concurrentdictionary-2?view=net-5.0
-        // Using ConcurrentDictionary as it can handle multiple threads concurrently / large collections
-        private ConcurrentDictionary<double, OnsetDetector> OnsetWriters = new ConcurrentDictionary<double, OnsetDetector>();
-        private ConcurrentBag<IntervalPredictionEngine> PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>();
-        private MidiBroadcaster MidiBroadcaster;
-        private ISoundIn soundIn;
-
-        private DrumTypeData LatestHighFreqData;
-        private DrumTypeData LatestMedFreqData;
-        private DrumTypeData LatestLowFreqData;
-        private DrumTypeData LatestData;
+        private static DrumTypeData LatestHighFreqData;
+        private static DrumTypeData LatestMedFreqData;
+        private static DrumTypeData LatestLowFreqData;
+        private static DrumTypeData LatestData;
+        private static OnsetWriter _onsetWriter;
 
 
-        public DrumPredictor(ISoundIn soundIn)
+        public static void Predict(MidiOutputDevice outputDevice, string modelDirectory)
         {
-            this.soundIn = soundIn;
-            MidiBroadcaster = new MidiBroadcaster(true);
+           
+
+            MidiBroadcaster = new MidiBroadcaster(true, outputDevice);
             
             LatestHighFreqData = new DrumTypeData();
             LatestMedFreqData = new DrumTypeData();
@@ -47,59 +38,38 @@ namespace OnsetPredictions
 
             PredictionEngines = new ConcurrentBag<IntervalPredictionEngine>()
             {
-                new IntervalPredictionEngine("HighFrequencyDrumTypeClassificationModel", () => LatestHighFreqData, MidiBroadcaster.Broadcast),
-                new IntervalPredictionEngine("MediumFrequencyDrumTypeClassificationModel", () => LatestMedFreqData, MidiBroadcaster.Broadcast),
-                new IntervalPredictionEngine("LowFrequencyDrumTypeClassificationModel", () => LatestLowFreqData, MidiBroadcaster.Broadcast),
-                new IntervalPredictionEngine("AllBandDrumTypeClassificationModel", () => LatestData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine(Path.Combine(modelDirectory, "HighFrequencyDrumTypeClassificationModel.zip" ), () => LatestHighFreqData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine(Path.Combine(modelDirectory, "MediumFrequencyDrumTypeClassificationModel.zip" ), () => LatestMedFreqData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine(Path.Combine(modelDirectory, "LowFrequencyDrumTypeClassificationModel.zip" ), () => LatestLowFreqData, MidiBroadcaster.Broadcast),
+                new IntervalPredictionEngine(Path.Combine(modelDirectory, "AllBandDrumTypeClassificationModel.zip" ), () => LatestData, MidiBroadcaster.Broadcast),
             };
+            
+            Parallel.ForEach(PredictionEngines, engine => engine.Predicting = true);
 
-            Reset();
+            _onsetWriter = new OnsetWriter(PeakDetectionCallback);
+            _onsetWriter.DetectAndBroadcast();
         }
 
-        /// <summary>
-        /// Creates an onset writer for each frequency in parallel and begins detecting
-        /// </summary>
-        /// <param name="frequencies"></param>
-        public void Build(IEnumerable<double> frequencies)
+        public static void Stop()
         {
-            Parallel.ForEach(frequencies, frequency =>
+            MidiBroadcaster.Broadcasting = false;
+
+            foreach (var intervalPredictionEngine in PredictionEngines)
             {
-                var writer = new OnsetDetector(this.soundIn, frequency, PeakDetectionCallback);
-                OnsetWriters.AddOrUpdate(frequency, writer, (d, oldWriter) => writer);
-            });
+                intervalPredictionEngine.Dispose();
+            }
+
+            _onsetWriter.Reset();
         }
 
-        public void DetectAndBroadcast()
-        {
-            Parallel.ForEach(GetOnsetWriters(), (writer) =>
-            {
-                writer.Value.Detecting = true;
-            });
-
-            Parallel.ForEach(PredictionEngines, ((predictionEngine) =>
-            {
-                predictionEngine.Predicting = true;
-            }));
-        }
-
-        public ConcurrentDictionary<double, OnsetDetector> GetOnsetWriters()
-        {
-            return OnsetWriters;
-        }
-
-        public void Reset()
-        {
-            OnsetWriters.Clear();
-        }
-
-        private void PeakDetectionCallback(OnsetPeakModel peakValue, double frequency)
+        private static void PeakDetectionCallback(OnsetPeakModel peakValue, double frequency)
         {
             LatestData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
 
             if (frequency < 2000)
             {
                 LatestLowFreqData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
-            }  
+            }
             else if (frequency >= 2000 && frequency < 10000)
             {
                 LatestMedFreqData.SetValues(peakValue.PeakValue, peakValue.Average(), peakValue.Mean(), peakValue.L1Norm(), frequency);
