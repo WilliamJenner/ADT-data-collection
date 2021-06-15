@@ -10,6 +10,7 @@ namespace ADT
         public const string Export = "--export";
         public const string Train = "--train";
         public const string ADT = "--adt";
+        public const string Stop = "--stop";
 
     }
 }

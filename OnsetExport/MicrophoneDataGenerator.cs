@@ -17,7 +17,7 @@ namespace OnsetExport
             onsetWriter.DetectAndBroadcast();
 
             // WAIT FOR INPUT TO STOP
-            Console.WriteLine("Press any key to stop...");
+            Console.WriteLine("> Press any key to stop...");
             Console.ReadKey();
 
             onsetWriter.Reset();

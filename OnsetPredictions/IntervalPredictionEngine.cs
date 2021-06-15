@@ -13,7 +13,7 @@ namespace OnsetPredictions
     public class IntervalPredictionEngine : IDisposable
     {
         // % score for a prediction to be broadcast
-        private const int INTERVAL_SCORE_TOLERANCE = 80;
+        private const int INTERVAL_SCORE_TOLERANCE = 20;
 
         private readonly string _modelPath;
         private Func<DrumTypeData> GetLatestData;
@@ -89,8 +89,6 @@ namespace OnsetPredictions
                     {
                         OnPredict((DrumSoundType) highScoreIndex, highScore * 100, _modelPath);
                     }
-
-                    
                 }
             }
         }

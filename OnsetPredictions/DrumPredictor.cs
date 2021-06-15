@@ -22,6 +22,7 @@ namespace OnsetPredictions
         private static DrumTypeData LatestMedFreqData;
         private static DrumTypeData LatestLowFreqData;
         private static DrumTypeData LatestData;
+        private static OnsetWriter _onsetWriter;
 
 
         public static void Predict(MidiOutputDevice outputDevice, string modelDirectory)
@@ -45,8 +46,8 @@ namespace OnsetPredictions
             
             Parallel.ForEach(PredictionEngines, engine => engine.Predicting = true);
 
-            var onsetWriter = new OnsetWriter(PeakDetectionCallback);
-            onsetWriter.DetectAndBroadcast();
+            _onsetWriter = new OnsetWriter(PeakDetectionCallback);
+            _onsetWriter.DetectAndBroadcast();
         }
 
         public static void Stop()
@@ -57,6 +58,8 @@ namespace OnsetPredictions
             {
                 intervalPredictionEngine.Dispose();
             }
+
+            _onsetWriter.Reset();
         }
 
         private static void PeakDetectionCallback(OnsetPeakModel peakValue, double frequency)

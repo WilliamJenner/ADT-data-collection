@@ -88,7 +88,7 @@ namespace MLTraining
 
             // STEP 6: Save/persist the trained model to a .ZIP file
             mlContext.Model.Save(trainedModel, testTrainSplit.TrainSet.Schema, ModelPath);
-
+            Console.WriteLine($"Model saved to {ModelPath}");
             // STEP 7: Return the metrics
             return metrics;
         }
